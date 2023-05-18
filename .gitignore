@@ -33,3 +33,6 @@
 
 # Input files
 *.txt
+
+# VSCode files
+.vscode
