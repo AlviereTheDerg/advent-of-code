@@ -1,30 +1,39 @@
 #include <iostream>
 #include <fstream>
+#include <list>
 using namespace std;
 
 int gather_calories(ifstream& input) {
     int calories = 0;
     char buffer[32];
-    while (!input.getline(buffer, 32).fail() && atoi(buffer) != 0) {
-        calories += atoi(buffer);
+    while (!input.getline(buffer, 32).fail() && std::atoi(buffer) != 0) {
+        calories += std::atoi(buffer);
     }
-    cout << "Elf calories: " << calories << endl;
     return calories;
 }
 
 int main() {
     ifstream input("input.txt");
     if (!input.is_open()) {
-        cout << "Unable to open file" << endl;
+        std::cout << "Unable to open file" << std::endl;
         return 0;
     }
 
-    int highest = -1; //kludge starter value
-    while (int next_elf = gather_calories(input)) {
-        highest = std::max(highest, next_elf);
+    std::list<int> elves;
+    while (!input.eof()) {
+        elves.push_back(gather_calories(input));
     }
-
     input.close();
-    cout << "Most calories on single elf: " << highest << endl;
+
+    elves.sort();
+    int highest = elves.back();
+
+    int highest_three = 0;
+    std::list<int>::iterator iter = elves.end();
+    for (int i = 0; i < 3; i++) { highest_three += *(--iter); }
+
+    std::cout << "Part 1: " << highest << std::endl;
+    std::cout << "Part 2: " << highest_three << std::endl;
+
     return 0;
 }
