@@ -16,13 +16,29 @@ void line_to_elfdata(std::string line, int elfdata[4]) {
     return;
 }
 
-int detect_overlap(int elfdata[4]) {
+int detect_contains(int elfdata[4]) {
     if (elfdata[2] <= elfdata[0] && elfdata[1] <= elfdata[3])
         return 1; //if elf from 0-1 is inside elf from 2-3
     
     if (elfdata[0] <= elfdata[2] && elfdata[3] <= elfdata[1])
         return 1; //if elf from 2-3 is inside elf from 0-1
     
+    return 0;
+}
+
+int detect_overlap(int elfdata[4]) {
+    if (elfdata[2] <= elfdata[0] && elfdata[0] <= elfdata[3])
+        return 1; //elf from 0-1 starts inside elf from 2-3's range
+    
+    if (elfdata[2] <= elfdata[1] && elfdata[1] <= elfdata[3])
+        return 1; //elf from 0-1 ends inside elf from 2-3's range
+    
+    if (elfdata[0] <= elfdata[2] && elfdata[2] <= elfdata[1])
+        return 1; //elf from 2-3 starts inside elf from 0-1's range
+    
+    if (elfdata[0] <= elfdata[3] && elfdata[3] <= elfdata[1])
+        return 1; //elf from 2-3 ends inside elf from 0-1's range
+
     return 0;
 }
 
@@ -38,7 +54,8 @@ int main() {
     int elfdata[4];
     while (getline(input, line)) {
         line_to_elfdata(line, elfdata);
-        score_part1 += detect_overlap(elfdata);
+        score_part1 += detect_contains(elfdata);
+        score_part2 += detect_overlap(elfdata);
     }
     input.close();
 
