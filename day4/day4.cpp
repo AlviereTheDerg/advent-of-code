@@ -33,11 +33,8 @@ int detect_overlap(int elfdata[4]) {
     if (elfdata[2] <= elfdata[1] && elfdata[1] <= elfdata[3])
         return 1; //elf from 0-1 ends inside elf from 2-3's range
     
-    if (elfdata[0] <= elfdata[2] && elfdata[2] <= elfdata[1])
+    if (elfdata[0] <= elfdata[2] && elfdata[2] <= elfdata[1]) //only reachable if elf from 0-1 fully encompasses elf from 2-3, without either starting/ending on same spots
         return 1; //elf from 2-3 starts inside elf from 0-1's range
-    
-    if (elfdata[0] <= elfdata[3] && elfdata[3] <= elfdata[1])
-        return 1; //elf from 2-3 ends inside elf from 0-1's range
 
     return 0;
 }
