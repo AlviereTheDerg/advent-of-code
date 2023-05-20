@@ -42,6 +42,11 @@ void move_boxes(std::array<std::string, 10> &boxes, std::array<int, 3> commands)
     }
 }
 
+void shift_boxes(std::array<std::string, 10> &boxes, std::array<int, 3> commands) {
+    boxes[commands[2]] += boxes[commands[1]].substr(boxes[commands[1]].size()-commands[0]);
+    boxes[commands[1]] = boxes[commands[1]].substr(0, boxes[commands[1]].size()-commands[0]);
+}
+
 int main() {
     ifstream input("input.txt");
     if (!input.is_open()) {
@@ -49,22 +54,29 @@ int main() {
         return 0;
     }
 
-    std::array<std::string,10> boxes = read_start(input);
+    std::array<std::string,10> boxes_part1 = read_start(input);
+    std::array<std::string,10> boxes_part2 = boxes_part1;
     
     std::string line;
     std::array<int, 3> commands;
     while (getline(input, line)) {
         commands = extract_inputs(line);
-        move_boxes(boxes, commands);
+        move_boxes(boxes_part1, commands);
+        shift_boxes(boxes_part2, commands);
     }
     input.close();
 
     std::string result_part1 = "";
-    for (int i = 1; i < boxes.size(); i++) {
-        result_part1 += boxes[i].back();
+    for (int i = 1; i < boxes_part1.size(); i++) {
+        result_part1 += boxes_part1[i].back();
+    }
+
+    std::string result_part2 = "";
+    for (int i = 1; i < boxes_part2.size(); i++) {
+        result_part2 += boxes_part2[i].back();
     }
 
     std::cout << "Part 1: " << result_part1 << std::endl;
-    //std::cout << "Part 2: " << score_part2 << std::endl;
+    std::cout << "Part 2: " << result_part2 << std::endl;
     return 0;
 }
