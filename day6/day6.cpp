@@ -7,6 +7,15 @@ void dupe_free_append(std::string &buffer, char signal) {
     buffer.push_back(signal);
 }
 
+int find_dupe_free_segment(std::string input, int segment_length) {
+    std::string signal;
+    for (int i = 0; i < input.length(); i++) {
+        if (signal.length() >= segment_length)
+            return i;
+        dupe_free_append(signal, input[i]);
+    }
+}
+
 int main() {
     ifstream input("input.txt");
     if (!input.is_open()) {
@@ -17,17 +26,11 @@ int main() {
     input >> line;
     input.close();
 
-    int result_part1 = 0;//, result_part2 = 0;
-    std::string signal;
-    for (int i = 0; i < line.length(); i++) {
-        if (signal.length() >= 4) {
-            result_part1 = i;
-            break;
-        }
-        dupe_free_append(signal, line[i]);
-    }
+    int result_part1 = 0, result_part2 = 0;
+    result_part1 = find_dupe_free_segment(line, 4);
+    result_part2 = find_dupe_free_segment(line, 14);
 
     std::cout << "Part 1: " << result_part1 << std::endl;
-    //std::cout << "Part 2: " << result_part2 << std::endl;
+    std::cout << "Part 2: " << result_part2 << std::endl;
     return 0;
 }
