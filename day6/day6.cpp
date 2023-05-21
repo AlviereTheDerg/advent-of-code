@@ -14,6 +14,7 @@ int find_dupe_free_segment(std::string input, int segment_length) {
             return i;
         dupe_free_append(signal, input[i]);
     }
+    return 0;
 }
 
 int main() {
