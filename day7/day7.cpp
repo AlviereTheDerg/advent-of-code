@@ -142,6 +142,15 @@ int sum_of_directories_of_at_most_1e6(struct vdir* directory) {
     return sum;
 }
 
+int smallest_directory_above_X(struct vdir* directory, int device_storage, int space_needed) {
+    int smallest_found = (directory->size >= space_needed) ? directory->size : device_storage;
+    
+    for (std::vector<struct vdir*>::iterator iter = directory->children.begin(); iter != directory->children.end(); iter++)
+        smallest_found = std::min(smallest_found, smallest_directory_above_X(*iter, device_storage, space_needed));
+
+    return smallest_found;
+}
+
 int main() {
     ifstream input("input.txt");
     if (!input.is_open()) {
@@ -150,10 +159,11 @@ int main() {
     }
     struct vdir* root = construct_vfs(input);
     input.close();
+    int device_storage = 70000000, space_needed = 30000000;
 
-    int total = calculate_dir_size(root);
+    int currently_used = calculate_dir_size(root);
     int result_part1 = sum_of_directories_of_at_most_1e6(root);
-    int result_part2 = 0;
+    int result_part2 = smallest_directory_above_X(root, device_storage, currently_used - (device_storage - space_needed));
 
     teardown(root);
     std::cout << "Part 1: " << result_part1 << std::endl;
