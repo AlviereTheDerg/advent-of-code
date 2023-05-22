@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 int* parse_line(std::string line) {
@@ -23,43 +24,54 @@ int** read_map(ifstream &input, int &size) {
     return map;
 }
 
-int is_visible(int** tree_map, int size, int x, int y) {
-    //check each direction
+int see_left(int** tree_map, int size, int x, int y) {
     int trawl = x - 1;
     while (trawl >= 0) {
-        if (tree_map[y][trawl] >= tree_map[y][x])
+        if (tree_map[y][trawl--] >= tree_map[y][x])
             break;
-        trawl--;
     }
-    if (trawl == -1)
-        return 1;
-    
-    trawl = x + 1;
+    return x - trawl - 1;
+}
+
+int see_right(int** tree_map, int size, int x, int y) {
+    int trawl = x + 1;
     while (trawl < size) {
-        if (tree_map[y][trawl] >= tree_map[y][x])
+        if (tree_map[y][trawl++] >= tree_map[y][x])
             break;
-        trawl++;
     }
-    if (trawl == size)
-        return 1;
-    
-    
-    trawl = y - 1;
+    return trawl - x - 1;
+}
+
+int see_up(int** tree_map, int size, int x, int y) {
+    int trawl = y - 1;
     while (trawl >= 0) {
-        if (tree_map[trawl][x] >= tree_map[y][x])
+        if (tree_map[trawl--][x] >= tree_map[y][x])
             break;
-        trawl--;
     }
-    if (trawl == -1)
+    return y - trawl - 1;
+}
+
+int see_down(int** tree_map, int size, int x, int y) {
+    int trawl = y + 1;
+    while (trawl < size) {
+        if (tree_map[trawl++][x] >= tree_map[y][x])
+            break;
+    }
+    return trawl - y - 1;
+}
+
+int is_visible(int** tree_map, int size, int x, int y) {
+    //check each direction
+    if (see_left(tree_map, size, x, y) == x && (tree_map[y][0] < tree_map[y][x] || x == 0))
         return 1;
     
-    trawl = y + 1;
-    while (trawl < size) {
-        if (tree_map[trawl][x] >= tree_map[y][x])
-            break;
-        trawl++;
-    }
-    if (trawl == size)
+    if (see_right(tree_map, size, x, y) == size - x - 1 && (tree_map[y][size - 1] < tree_map[y][x] || x == size - 1))
+        return 1;
+    
+    if (see_up(tree_map, size, x, y) == y && (tree_map[0][x] < tree_map[y][x] || y == 0))
+        return 1;
+    
+    if (see_down(tree_map, size, x, y) == size - y - 1 && (tree_map[size - 1][x] < tree_map[y][x] || y == size - 1))
         return 1;
 
     return 0;
@@ -75,6 +87,25 @@ int find_visibles(int** tree_map, int size) {
     return visibles;
 }
 
+int scenic_score(int** tree_map, int size, int x, int y) {
+    int prod = 1;
+    prod *= see_left(tree_map, size, x, y);
+    prod *= see_right(tree_map, size, x, y);
+    prod *= see_up(tree_map, size, x, y);
+    prod *= see_down(tree_map, size, x, y);
+    return prod;
+}
+
+int most_scenic(int** tree_map, int size) {
+    int scenic = 0;
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            scenic = max(scenic, scenic_score(tree_map, size, x, y));
+        }
+    }
+    return scenic;
+}
+
 int main() {
     ifstream input("input.txt");
     if (!input.is_open()) {
@@ -86,7 +117,7 @@ int main() {
     input.close();
 
     int result_part1 = find_visibles(tree_map, size);
-    int result_part2 = 0;
+    int result_part2 = most_scenic(tree_map, size);
 
     std::cout << "Part 1: " << result_part1 << std::endl;
     std::cout << "Part 2: " << result_part2 << std::endl;
