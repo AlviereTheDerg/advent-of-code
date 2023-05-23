@@ -37,14 +37,13 @@ void merge_sets(std::unordered_set<std::array<int,2>> &destination, std::unorder
     destination.insert(source.begin(), source.end());
 }
 
-std::unordered_set<std::array<int,2>> tick_and_propagate(std::array<int,2> offset, std::vector<std::array<int,2>> &thread) {
+std::array<int,2> tick_and_propagate(std::array<int,2> offset, std::vector<std::array<int,2>> &thread) {
     thread[0][0] += offset[0]; thread[0][1] += offset[1];
-    std::unordered_set<std::array<int,2>> visited;
+    std::array<int, 2> tail;
     for (int index = 0; index < thread.size() - 1; index++) {
-        std::array<int, 2> foo = update_tail(thread[index], thread[index + 1]);
-        visited.insert(foo);
+        tail = update_tail(thread[index], thread[index + 1]);
     }
-    return visited;
+    return tail;
 }
 
 int track_tail(int length) {
@@ -68,7 +67,7 @@ int track_tail(int length) {
             case 'D': offset = { 0,-1}; break;
         }
         for (int index = 0; index < amount; index++) {
-            merge_sets(visited, tick_and_propagate(offset, thread));
+            visited.insert(tick_and_propagate(offset, thread));
         }
     }
     input.close();
@@ -79,7 +78,7 @@ int track_tail(int length) {
 int main() {
 
     int result_part1 = track_tail(2);
-    int result_part2 = 0;
+    int result_part2 = track_tail(10);
 
     std::cout << "Part 1: " << result_part1 << std::endl;
     std::cout << "Part 2: " << result_part2 << std::endl;
