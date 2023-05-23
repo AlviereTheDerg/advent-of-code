@@ -6,7 +6,7 @@ using namespace std;
 
 std::vector<int> parse_input(ifstream &input) {
     std::vector<int> signal(1, 0);
-    int regX = 1, state = 0, cycle = 0;
+    int regX = 1, state = 0;
     std::string arg;
 
     while (input >> arg) {
@@ -36,6 +36,14 @@ int tally_signal(std::vector<int> signal) {
     return sum;
 }
 
+void draw_part2(std::vector<int> signal) {
+    for (int index = 1; index < signal.size() - 1; index++) {
+        std::cout << ((abs((index - 1) % 40 - signal[index]) <= 1) ? '#' : ' ');
+        if (index % 40 == 0) std::cout << std::endl;
+    }
+    return;
+}
+
 int main() {ifstream input("input.txt");
     if (!input.is_open()) {
         std::cout << "Unable to open file" << std::endl;
@@ -45,9 +53,8 @@ int main() {ifstream input("input.txt");
     input.close();
 
     int result_part1 = tally_signal(signal);
-    int result_part2 = 0;
 
     std::cout << "Part 1: " << result_part1 << std::endl;
-    std::cout << "Part 2: " << result_part2 << std::endl;
+    draw_part2(signal);
     return 0;
 }
