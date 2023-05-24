@@ -7,7 +7,7 @@ using namespace std;
 
 struct Monkey {
     std::vector<long long> items;
-    long long (*operation)(long long,int);
+    char operation;
     int op_aux;
     int check, if_true, if_false;
 };
@@ -27,16 +27,12 @@ void load_items(struct Monkey* monkey, std::string items) {
 void load_operation(struct Monkey* monkey, std::string func_operation) {
     trim(func_operation, "Operation: new = old ");
     if (func_operation.compare("* old") == 0) {
-        monkey->operation = [] (long long old, int unused) {return old * old;};
-        monkey->op_aux = 0;
+        monkey->operation = '^';
+        monkey->op_aux = 2;
         return;
     }
 
-    if (func_operation[0] == '+')
-        monkey->operation = [] (long long old, int operand) {return old + operand;};
-    else
-        monkey->operation = [] (long long old, int operand) {return old * operand;};
-    
+    monkey->operation = func_operation[0];
     monkey->op_aux = std::stoi(func_operation.substr(func_operation.find(" ")));
     return;
 }
@@ -65,24 +61,33 @@ struct Monkey* make_a_monkey(ifstream &input) {
     return monkey;
 }
 
+
+
 long long inspect(struct Monkey* monkey, long long value) {
-    return monkey->operation(value, monkey->op_aux);
+    long long result;
+    switch (monkey->operation) {
+        case '^':
+        result = value * value;
+        break;
+        case '+':
+        result = value + monkey->op_aux;
+        break;
+        case '*':
+        result = value * monkey->op_aux;
+        break;
+    }
+    return result;
 }
 
-long long check(struct Monkey* monkey, long long value) {
+int check(struct Monkey* monkey, long long value) {
     return (value % monkey->check == 0) ? monkey->if_true : monkey->if_false;
 }
 
-int throw_all(std::vector<struct Monkey*> monkeys, int index) {
+int throw_all(std::vector<struct Monkey*> monkeys, int index, long long (*oper)(long long item, long long aux), long long auxiliary) {
     for (long long item : monkeys[index]->items) {
-        std::cout << "Monkey " << index << ": ";
-        std::cout << item << "->";
         item = inspect(monkeys[index], item);
-        std::cout << item << "->";
-        item /= 3;
-        std::cout << item << ": choice ";
+        item = oper(item, auxiliary);
         int foo = check(monkeys[index], item);
-        std::cout << foo << std::endl;
         monkeys[foo]->items.push_back(item);
     }
     int amount = monkeys[index]->items.size();
@@ -90,36 +95,17 @@ int throw_all(std::vector<struct Monkey*> monkeys, int index) {
     return amount;
 }
 
-std::vector<int> monkey_round(std::vector<struct Monkey*> monkeys) {
+std::vector<int> monkey_round(std::vector<struct Monkey*> monkeys, long long (*oper)(long long item, long long aux), long long auxiliary) {
     std::vector<int> checks(monkeys.size(), 0);
     
     for (int index = 0; index < monkeys.size(); index++) {
-        checks[index] += throw_all(monkeys, index);
+        checks[index] += throw_all(monkeys, index, oper, auxiliary);
     }
 
     return checks;
 }
 
-int monkey_business(std::vector<struct Monkey*> monkeys, int rounds) {
-    std::vector<int> inspections(monkeys.size(), 0), current_round;
-    int highest;
-    
-    for (int round = 0; round < rounds; round++) {
-        highest = 0;
-        std::cout << "Round " << round << std::endl;
-        current_round = monkey_round(monkeys);
-        for (int index = 0; index < inspections.size(); index++) {
-            inspections[index] += current_round[index];
-            for (int x : monkeys[index]->items)
-                highest = std::max(highest, x);
-        }
-        std::cout << "Highest: " << highest << std::endl;
-    }
-    std::sort(inspections.begin(), inspections.end());
-    return *(inspections.end() - 1) * *(inspections.end() - 2);
-}
-
-int main() {
+long long monkey_business(int rounds, long long (*oper)(long long item, long long aux)) {
     ifstream input("input.txt");
     if (!input.is_open()) {
         std::cout << "Unable to open file" << std::endl;
@@ -129,7 +115,26 @@ int main() {
     while (!input.eof()) monkeys.push_back(make_a_monkey(input));
     input.close();
 
-    int result_part1 = monkey_business(monkeys, 20);
+    std::vector<long long> inspections(monkeys.size(), 0);
+    std::vector<int> current_round;
+    long long auxiliary = 1;
+    for (struct Monkey* monkey : monkeys)
+        auxiliary *= monkey->check;
+    
+    for (int round = 0; round < rounds; round++) {
+        current_round = monkey_round(monkeys, oper, auxiliary);
+        for (int index = 0; index < inspections.size(); index++) {
+            inspections[index] += current_round[index];
+        }
+    }
+    std::sort(inspections.rbegin(), inspections.rend());
+    return inspections[0] * inspections[1];
+}
+
+int main() {
+    long long result_part1 = monkey_business(20, [](long long item, long long aux) {return (item) / 3;});
+    long long result_part2 = monkey_business(10000, [](long long item, long long aux) {return item % aux;});
     std::cout << "Part 1: " << result_part1 << std::endl;
+    std::cout << "Part 2: " << result_part2 << std::endl;
     return 0;
 }
