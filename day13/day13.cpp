@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-//#include <sstream>
 #include <vector>
 using namespace std;
 
@@ -61,13 +60,45 @@ int compare(std::string left, std::string right) {
     //if left shorter, 1, if equal length, 0, if right shorter, -1
 }
 
-int part1() {
+size_t part2_insert(std::vector<std::string> &string_list, std::string new_string, size_t start_index) {
+    size_t location = 0;
+    for (location = start_index; location < string_list.size(); location++) {
+        switch(compare(new_string, string_list[location])) {
+            case -1: continue;
+            case 0: case 1:
+                string_list.insert(string_list.begin() + location, new_string);
+                return location;
+        }
+    }
+    string_list.push_back(new_string);
+    return location;
+}
+
+int part2_calculate(std::vector<std::string> string_list) {
+    int result = -1;
+    for (int index = 0; index < string_list.size(); index++) {
+        if (result == -1 && string_list[index].compare("[[2]]") == 0)
+            result = index + 1;
+        else if (result != -1 && string_list[index].compare("[[6]]") == 0) {
+            result *= index + 1;
+            return result;
+        }
+    }
+    return -1;
+}
+
+int main() {
     ifstream input("input.txt");
     if (!input.is_open()) {
         std::cout << "Unable to open file" << std::endl;
         return -1;
     }
-    int result = 0, pair = 0;
+    int result_part1 = 0, comp_result, pair = 0;
+    size_t index_holder;
+
+    std::vector<std::string> result_part2(0);
+    index_holder = part2_insert(result_part2, "[[2]]", 0);
+    part2_insert(result_part2, "[[6]]", index_holder);
 
     std::string left, right, foo;
     while (!input.eof()) {
@@ -75,14 +106,19 @@ int part1() {
         getline(input, right);
         getline(input, foo);
         pair++;
+        comp_result = compare(left, right);
 
-        result += pair * ((compare(left, right) > 0) ? 1 : 0);
+        result_part1 += pair * ((comp_result > 0) ? 1 : 0);
+        if (comp_result == 1) {
+            index_holder = part2_insert(result_part2, left, 0);
+            part2_insert(result_part2, right, index_holder);
+        } else {
+            index_holder = part2_insert(result_part2, right, 0);
+            part2_insert(result_part2, left, index_holder);
+        }
     }
-
     input.close();
-    return result;
-}
 
-int main() {
-    std::cout << "Part 1: " << part1() << std::endl;
+    std::cout << "Part 1: " << result_part1 << std::endl;
+    std::cout << "Part 2: " << part2_calculate(result_part2) << std::endl;
 }
