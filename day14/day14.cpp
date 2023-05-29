@@ -43,8 +43,9 @@ std::vector<std::string> split_list(std::string input_list) {
 }
 
 int sand_fall(std::map<std::pair<int,int>,char> &wall, int wall_height, std::pair<int,int> current_position) {
-    if (current_position.second == wall_height)
+    if (current_position.second == wall_height + 2) {
         return 0;
+    }
     
     std::map<std::pair<int,int>,char>::iterator found = wall.find(make_pair(current_position.first, current_position.second + 1)); //down
     if (found == wall.end())
@@ -59,6 +60,10 @@ int sand_fall(std::map<std::pair<int,int>,char> &wall, int wall_height, std::pai
         return sand_fall(wall, wall_height, make_pair(current_position.first + 1, current_position.second + 1));
     
     //all 3 below it blocked
+    found = wall.find(current_position);
+    if (found != wall.end()) //current position filled by something
+        return 0;
+
     wall.insert(make_pair(current_position,'o'));
     return 1;
 }
@@ -67,6 +72,26 @@ int drop_sand(std::map<std::pair<int,int>,char> &wall, int wall_height) {
     int count = 0;
     while (sand_fall(wall, wall_height, make_pair(500,0))) count++;
     return count;
+}
+
+void print_wall(std::map<std::pair<int,int>,char> &wall, int wall_height, int leftmost, int rightmost) {
+    std::map<std::pair<int,int>,char>::iterator found;
+    for (int y = 0; y <= wall_height + 2; y++) {
+        for (int x = leftmost; x <= rightmost; x++) {
+            if (x == 500 && y == 0) {
+                std::cout << '+';
+                continue;
+            }
+
+            found = wall.find(make_pair(x,y));
+            if (found == wall.end())
+                std::cout << '.';
+            else
+                std::cout << found->second;
+            
+        }
+        std::cout << std::endl;
+    }
 }
 
 int main() {
@@ -89,25 +114,15 @@ int main() {
     input.close();
 
     int result_part1 = drop_sand(wall_map, deepest);
-
-    std::map<std::pair<int,int>,char>::iterator found;
-    for (int y = 0; y <= deepest; y++) {
-        for (int x = leftmost; x <= rightmost; x++) {
-            if (x == 500 && y == 0) {
-                std::cout << '+';
-                continue;
-            }
-
-            found = wall_map.find(make_pair(x,y));
-            if (found == wall_map.end())
-                std::cout << '.';
-            else
-                std::cout << found->second;
-            
-        }
-        std::cout << std::endl;
-    }
-
+    //print_wall(wall_map, deepest, leftmost, rightmost);
     std::cout << "Part 1: " << result_part1 << std::endl;
+
+    std::string big_leftmost = std::to_string(500 - deepest - 2) + "," + std::to_string(deepest + 2);
+    std::string big_rightmost = std::to_string(500 + deepest + 2) + "," + std::to_string(deepest + 2);
+    draw_line(wall_map, big_leftmost, big_rightmost, leftmost, rightmost);
+    int result_part2 = drop_sand(wall_map, deepest) + result_part1;
+    //print_wall(wall_map, deepest, leftmost, rightmost);
+    std::cout << "Part 2: " << result_part2 << std::endl;
+
     return 0;
 }
