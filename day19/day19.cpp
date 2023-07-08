@@ -11,7 +11,6 @@ typedef std::array<int,6> bp_type;
 typedef std::array<int,8> state_data;
 
 bp_type current_bp;
-std::map<state_data,int> visiteds;
 int current_max;
 
 std::vector<std::string> split_string(std::string input) {
@@ -114,10 +113,6 @@ int calculate_hypothetical_max(state_data current_state, int time_remaining) {
 }
 
 int calculate_max_geodes(state_data current_state, int time_remaining, std::array<bool,4> possibilities) {
-    //if (visiteds.count(current_state) != 0 && visiteds[current_state] >= time_remaining)
-    //    return 0;
-    //visiteds[current_state] = time_remaining;
-    
     if (time_remaining <= 0)
         return current_state[7];
     
@@ -149,7 +144,6 @@ int calculate_max_geodes(state_data current_state, int time_remaining, std::arra
 
 void reset_things(bp_type blueprint) {
     current_bp = blueprint;
-    visiteds.clear();
     current_max = 0;
 }
 
@@ -166,34 +160,20 @@ int calculate_part1(std::vector<bp_type> blueprints) {
     return results;
 }
 
-void testsample() {
-    bp_type bp1 = {4,2,3,14,2,7};
-    bp_type bp2 = {2,3,3,8,3,12};
-    
-    reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,2, 6,41,8,9}, 0, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M23: 9 " << calculate_max_geodes({1,4,2,2, 5,37,6,7}, 1, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M22: 9 " << calculate_max_geodes({1,4,2,2, 4,33,4,5}, 2, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M21: 9 " << calculate_max_geodes({1,4,2,2, 3,29,2,3}, 3, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M20: 9 " << calculate_max_geodes({1,4,2,1, 4,25,7,2}, 4, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M19: 9 " << calculate_max_geodes({1,4,2,1, 3,21,5,1}, 5, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M18: 9 " << calculate_max_geodes({1,4,2,1, 2,17,3,0}, 6, {true,true,true,true}) << std::endl;
-    reset_things(bp1);
-    std::cout << "M00: 9 " << calculate_max_geodes({1,0,0,0, 0,0,0,0}, 24, {true,true,true,true}) << std::endl;
-    reset_things(bp2);
-    std::cout << "M00: 12 " << calculate_max_geodes({1,0,0,0, 0,0,0,0}, 24, {true,true,true,true}) << std::endl;
-    return;
+int calculate_part2(std::vector<bp_type> blueprints) {
+    int results = 1, bp_number = 0;
+    while (bp_number < 3) {
+        reset_things(blueprints[bp_number]);
+        
+        bp_number++;
+        std::cout << "Checking bp " << bp_number << "/3 ... ";
+        results *= calculate_max_geodes({1,0,0,0, 0,0,0,0}, 32, {true,true,true,true});
+        std::cout << "done" << std::endl;
+    }
+    return results;
 }
 
 int main() {
-    //testsample();
-    
     ifstream input("input.txt");
     if (!input.is_open()) {
         std::cout << "Unable to open file" << std::endl;
@@ -208,6 +188,13 @@ int main() {
     std::chrono::duration<double, std::milli> exec_double = t2 - t1;
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 1 execution time: " << exec_double.count() << "ms" << std::endl;
+
+    t1 = std::chrono::high_resolution_clock::now();
+    int part2 = calculate_part2(blueprints);
+    t2 = std::chrono::high_resolution_clock::now();
+    exec_double = t2 - t1;
+    std::cout << "Part 2: " << part2 << std::endl;
+    std::cout << "Part 2 execution time: " << exec_double.count() << "ms" << std::endl;
     
     return 0;
 }
