@@ -4,6 +4,7 @@
 #include <array>
 #include <set>
 #include <map>
+#include <chrono>
 using namespace std;
 
 typedef std::array<int,6> bp_type;
@@ -94,7 +95,7 @@ void tick_state(state_data &current_state) {
 
 int calculate_hypothetical_max(state_data current_state, int time_remaining) {
     int results = current_state[3] * time_remaining + current_state[7];
-    results += (time_remaining - 2) * (time_remaining - 1) / 2;
+    results += (time_remaining - 1) * (time_remaining) / 2;
     return results;
 }
 
@@ -104,7 +105,7 @@ int calculate_max_geodes(state_data current_state, int time_remaining) {
     visiteds[current_state] = time_remaining;
 
     int results = calculate_hypothetical_max(current_state, time_remaining);
-    if (results < current_max)
+    if (results <= current_max)
         return 0;
     
     if (time_remaining <= 0)
@@ -112,8 +113,36 @@ int calculate_max_geodes(state_data current_state, int time_remaining) {
     
     state_data branches;
     results = 0;
+    
+    if (can_make_bot(current_state,3)) {
+        branches = current_state;
+        tick_state(branches);
+        make_bot(branches,3);
+        return calculate_max_geodes(branches, time_remaining - 1);
+    }
+    
+    if (can_make_bot(current_state,2) && current_state[2] < current_bp[5]) {
+        branches = current_state;
+        tick_state(branches);
+        make_bot(branches,2);
+        results = std::max(results, calculate_max_geodes(branches, time_remaining - 1));
+    }
+    
+    if (can_make_bot(current_state,1) && current_state[1] < current_bp[3]) {
+        branches = current_state;
+        tick_state(branches);
+        make_bot(branches,1);
+        results = std::max(results, calculate_max_geodes(branches, time_remaining - 1));
+    }
+    
+    if (can_make_bot(current_state,0) && current_state[0] < std::max(std::max(current_bp[0], current_bp[1]), std::max(current_bp[2], current_bp[4]))) {
+        branches = current_state;
+        tick_state(branches);
+        make_bot(branches,0);
+        results = std::max(results, calculate_max_geodes(branches, time_remaining - 1));
+    }
 
-    for (int i = 0; i < 4; i++) {
+    /*for (int i = 0; i < 3; i++) {
         if (!can_make_bot(current_state,i))
             continue;
         
@@ -121,7 +150,7 @@ int calculate_max_geodes(state_data current_state, int time_remaining) {
         tick_state(branches);
         make_bot(branches, i);
         results = max(results, calculate_max_geodes(branches, time_remaining - 1));
-    }
+    }*/
     tick_state(current_state);
     results = max(results, calculate_max_geodes(current_state, time_remaining - 1));
     
@@ -155,21 +184,21 @@ void testsample() {
     reset_things(bp1);
     std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,2, 6,41,8,9}, 0) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,2, 5,37,6,7}, 1) << std::endl;
+    std::cout << "M23: 9 " << calculate_max_geodes({1,4,2,2, 5,37,6,7}, 1) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,2, 4,33,4,5}, 2) << std::endl;
+    std::cout << "M22: 9 " << calculate_max_geodes({1,4,2,2, 4,33,4,5}, 2) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,2, 3,29,2,3}, 3) << std::endl;
+    std::cout << "M21: 9 " << calculate_max_geodes({1,4,2,2, 3,29,2,3}, 3) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,1, 4,25,7,2}, 4) << std::endl;
+    std::cout << "M20: 9 " << calculate_max_geodes({1,4,2,1, 4,25,7,2}, 4) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,1, 3,21,5,1}, 5) << std::endl;
+    std::cout << "M19: 9 " << calculate_max_geodes({1,4,2,1, 3,21,5,1}, 5) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,4,2,1, 2,17,3,0}, 6) << std::endl;
+    std::cout << "M18: 9 " << calculate_max_geodes({1,4,2,1, 2,17,3,0}, 6) << std::endl;
     reset_things(bp1);
-    std::cout << "M24: 9 " << calculate_max_geodes({1,0,0,0, 0,0,0,0}, 24) << std::endl;
+    std::cout << "M00: 9 " << calculate_max_geodes({1,0,0,0, 0,0,0,0}, 24) << std::endl;
     reset_things(bp2);
-    std::cout << "M24: 12 " << calculate_max_geodes({1,0,0,0, 0,0,0,0}, 24) << std::endl;
+    std::cout << "M00: 12 " << calculate_max_geodes({1,0,0,0, 0,0,0,0}, 24) << std::endl;
     return;
 }
 
@@ -184,8 +213,12 @@ int main() {
     std::vector<bp_type> blueprints = load_blueprints(input);
     input.close();
 
+    auto t1 = std::chrono::high_resolution_clock::now();
     int part1 = calculate_part1(blueprints);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> exec_double = t2 - t1;
     std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 1 execution time: " << exec_double.count() << "ms" << std::endl;
     
     return 0;
 }
