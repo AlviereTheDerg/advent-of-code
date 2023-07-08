@@ -114,9 +114,9 @@ int calculate_hypothetical_max(state_data current_state, int time_remaining) {
 }
 
 int calculate_max_geodes(state_data current_state, int time_remaining, std::array<bool,4> possibilities) {
-    if (visiteds.count(current_state) != 0 && visiteds[current_state] >= time_remaining)
-        return 0;
-    visiteds[current_state] = time_remaining;
+    //if (visiteds.count(current_state) != 0 && visiteds[current_state] >= time_remaining)
+    //    return 0;
+    //visiteds[current_state] = time_remaining;
     
     if (time_remaining <= 0)
         return current_state[7];
