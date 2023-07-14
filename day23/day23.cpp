@@ -61,8 +61,11 @@ location plan_move(location elf) {
 
 std::map<location, location> plan_moves() {
     std::map<location, location> elf_moves;
+    location plan;
     for (location elf : elves) {
-        elf_moves[elf] = plan_move(elf);
+        plan = plan_move(elf);
+        if (plan != elf)
+            elf_moves[elf] = plan;
     }
     return elf_moves;
 }
@@ -78,23 +81,27 @@ std::set<location> identify_overlaps(std::map<location, location> elf_moves) {
     return overlaps;
 }
 
-void enact_moves(std::map<location, location> moves, std::set<location> overlaps) {
+bool enact_moves(std::map<location, location> moves, std::set<location> overlaps) {
+    bool result = false;
     for (std::pair<location, location> move : moves) {
         if (overlaps.count(move.second) != 0)
             continue;
         
+        if (move.first == move.second)
+            continue;
+
+        result = true;
         elves.erase(move.first);
         elves.insert(move.second);
     }
-    return;
+    return result;
 }
 
-void round() {
+bool round() {
     std::map<location, location> prospective_moves = plan_moves();
     std::set<location> overlaps = identify_overlaps(prospective_moves);
-    enact_moves(prospective_moves, overlaps);
     start_rule = (start_rule + 1) % rules.size();
-    return;
+    return enact_moves(prospective_moves, overlaps);
 }
 
 long long calculate_part1() {
@@ -148,7 +155,20 @@ int main() {
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> exec_double = t2 - t1;
     std::cout << "Part 1: " << calculate_part1() << std::endl;
-    std::cout << "Execution time: " << exec_double.count() << "ms" << std::endl;
+    std::cout << "Part 1 execution time: " << exec_double.count() << "ms" << std::endl;
+    
+    
+    t1 = std::chrono::high_resolution_clock::now();
+    int i = 11;
+    while (round()) {
+        if (i % 10 == 0)
+            std::cout << "Round: " << i << std::endl;
+        i++;
+    }
+    t2 = std::chrono::high_resolution_clock::now();
+    exec_double = t2 - t1;
+    std::cout << "Part 2: " << i << std::endl;
+    std::cout << "Part 2 execution time: " << exec_double.count() << "ms" << std::endl;
     
     return 0;
 }
