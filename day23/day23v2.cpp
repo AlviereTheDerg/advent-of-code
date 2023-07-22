@@ -96,71 +96,57 @@ int plan_move(location elf) {
     return -1;
 }
 
+//moved_direction is the direction the elf wants to move
+void emplace_moved_elf(location elf, int moved_direction) {
+    if (moved_direction != -1)
+        elf = elf + rules[moved_direction].first;
+    
+    bool neighbours = true;
+    for (location offset : checkables) {
+        if (next_moving_elves.count(elf + offset) != 0) {
+            neighbours = false;
+        } else if (next_unmoving_elves.count(elf + offset) != 0) {
+            neighbours = false;
+            next_unmoving_elves.erase(elf + offset);
+            next_moving_elves.insert(elf + offset);
+        }
+    }
+
+    if (neighbours) {
+        next_unmoving_elves.insert(elf);
+    } else {
+        next_moving_elves.insert(elf);
+    }
+    
+    return;
+}
+
 bool round() {
-    next_unmoving_elves.clear();
+    next_unmoving_elves = current_unmoving_elves;
     next_moving_elves.clear();
 
     int sanity_check{(int) current_moving_elves.size() + (int) current_unmoving_elves.size()};
     //plan out moves
-    //if an elf outright can't move then put them in unable_to_move
     //if an elf might run into a move contestation put them into possible_contestation
-    std::map<location,int> move_plans{};
     std::map<location,int> possible_contestation{};
-    std::set<location> unable_to_move{};
-    location destination;
     for (location elf : current_moving_elves) {
-        move_plans[elf] = plan_move(elf);
-        if (move_plans[elf] == -1) {
-            unable_to_move.insert(elf);
-            move_plans.erase(elf);
+        int move_direction = plan_move(elf);
+        if (move_direction != -1 && current_moving_elves.count(elf + 2*rules[move_direction].first) != 0) {
+            possible_contestation[elf] = move_direction;
             continue;
         }
-        destination = elf + 2*rules[move_plans[elf]].first;
-        if (current_moving_elves.count(destination) != 0) {
-            possible_contestation[elf] = move_plans[elf];
-            move_plans.erase(elf);
-            continue;
-        }
+        emplace_moved_elf(elf, move_direction);
     }
 
     //settle contestations
     for (std::pair<location,int> elf_move : possible_contestation) {
-        destination = elf_move.first + 2*rules[elf_move.second].first;
-        if (possible_contestation.count(destination) == 0) {
-            move_plans[elf_move.first] = elf_move.second;
-            continue;
-        }
-        if (possible_contestation[destination] == opposing_directions[elf_move.second]) {
+        location destination = elf_move.first + 2*rules[elf_move.second].first;
+        if (possible_contestation.count(destination) != 0 && possible_contestation[destination] == opposing_directions[elf_move.second]) {
             //another elf is trying to move to the same location
-            unable_to_move.insert(elf_move.first);
+            emplace_moved_elf(elf_move.first, -1);
         } else {
             //other elf isn't moving to this location
-            move_plans[elf_move.first] = elf_move.second;
-        }
-    }
-
-    //merge the moved elves
-    std::set<location> unsorted_elves{unable_to_move};
-    for (std::pair<location,int> elf_move : move_plans) {
-        unsorted_elves.insert(elf_move.first + rules[elf_move.second].first);
-    }
-
-    //settle the elves into
-    next_unmoving_elves = current_unmoving_elves;
-    for (location elf : unsorted_elves) {
-        bool neighbours = true;
-        for (int i = 0; i < checkables.size(); i++) {
-            location offset = checkables[i];
-            if (next_unmoving_elves.count(elf + offset) == 0 && next_moving_elves.count(elf + offset) == 0)
-                continue;
-            
-            neighbours = false;
-            next_moving_elves.insert(elf);
-            next_unmoving_elves.erase(elf + offset);
-            next_moving_elves.insert(elf + offset);
-        }
-        if (neighbours) {
-            next_unmoving_elves.insert(elf);
+            emplace_moved_elf(elf_move.first, elf_move.second);
         }
     }
 
@@ -258,11 +244,13 @@ int main() {
     
     t1 = std::chrono::high_resolution_clock::now();
     int i = 11;
+    std::cout << "Part 2 start ";
     while (round()) {
         if (i % 10 == 0)
-            std::cout << "Round: " << i << std::endl;
+            std::cout << '.';
         i++;
     }
+    std::cout << endl;
     t2 = std::chrono::high_resolution_clock::now();
     exec_double = t2 - t1;
     std::cout << "Part 2: " << i << std::endl;
