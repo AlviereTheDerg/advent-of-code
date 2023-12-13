@@ -1,0 +1,8 @@
+# Environment
+.venv
+
+# Input files
+*.txt
+
+# VSCode files
+.vscode
