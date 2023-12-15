@@ -1,24 +1,27 @@
 
+from functools import reduce
+
 r, g, b = "red", "green", "blue"
 # parse the input
-# dict => game id : game info
-# game info => list of hands
-# hands => maps of r,g,b to int (number of coloured cubes)
+# dict => game id : info
+# each game compressed down to highest count of each colour in the hand
 with open("day02/day02.txt", "r") as input:
-    result = {i:
-                [{r:0, g:0, b:0} | dict(                                    # if a colour doesn't show up in a hand, it defaults to 0
-                    tuple(stuff.split(' ')[::-1])                           # separate number and colour, k=colour v=number
-                    for stuff in hand.split(', '))                          # hand => list of colour counts ("number colour")
-                 for hand in line[line.find(":")+2:].strip().split("; ")]   # "Game number: hand; hand;"" => list of hands
-              for i,line in enumerate(input, start=1)}                      # file => game id : game info
+    def process_game(hands):
+        raws = (tuple(stuff.split(' ')[::-1])for hand in hands for stuff in hand.split(', '))
+        game = {r:0, g:0, b:0}
+        for colour, count in raws:
+            game[colour] = max(game[colour], int(count))
+        return game
+    
+    result = {i:process_game(line[line.find(":")+2:].strip().split("; ")) for i,line in enumerate(input, start=1)}
 
+# part 1
 possible = {r:12, g:13, b:14}
-score = 0
-for game in result.items():
-    for play in game[1]:
-        #compare
-        if int(play[r]) > possible[r] or int(play[g]) > possible[g] or int(play[b]) > possible[b]:
-            break
-    else:
-        score += game[0]
-print(score)
+print(reduce(lambda a,b: a+b, 
+             (index for index, play in result.items() 
+              if (play[r] <= possible[r] and play[g] <= possible[g] and play[b] <= possible[b]))))
+
+# part 2
+print(reduce(lambda a,b: a+b, 
+             (reduce(lambda c,d: c*d, play.values()) 
+              for play in result.values())))
