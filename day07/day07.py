@@ -2,11 +2,7 @@
 from functools import cmp_to_key, reduce
 import operator
 
-def classify_pt1(card):
-    counts = dict()
-    for char in card:
-        counts[char] = 1 + counts.get(char, 0)
-    counts = sorted(counts[char] for char in counts)
+def counts_to_rank(counts):
     match counts:
         case [5]:
             return 6
@@ -22,8 +18,13 @@ def classify_pt1(card):
             return 1
         case [1,1,1,1,1]:
             return 0
-        case _:
-            print("UH OH")
+
+def classify_pt1(card):
+    counts = dict()
+    for char in card:
+        counts[char] = 1 + counts.get(char, 0)
+    counts = sorted(counts[char] for char in counts)
+    return counts_to_rank(counts)
 
 def classify_pt2(card):
     counts = dict()
@@ -34,23 +35,7 @@ def classify_pt2(card):
         counts_sorted[-1] += counts.get('J',0)
     else:
         counts_sorted.append(counts.get('J',0))
-    match counts_sorted:
-        case [5]:
-            return 6
-        case [1,4]:
-            return 5
-        case [2,3]:
-            return 4
-        case [1,1,3]:
-            return 3
-        case [1,2,2]:
-            return 2
-        case [1,1,1,2]:
-            return 1
-        case [1,1,1,1,1]:
-            return 0
-        case _:
-            print("UH OH")
+    return counts_to_rank(counts_sorted)
 
 def process(hand_classifier, card_rankings):
     def compare(card1, card2):
