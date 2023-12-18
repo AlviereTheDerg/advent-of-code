@@ -15,3 +15,4 @@ def possible_times(total_time, distance_to_beat):
     return math.ceil(high) - math.floor(low) - 1
 
 print(reduce(operator.mul, (possible_times(int(time_of), int(distance_of)) for time_of,distance_of in zip(time,distance))))
+print(possible_times(int("".join(time)), int("".join(distance))))
