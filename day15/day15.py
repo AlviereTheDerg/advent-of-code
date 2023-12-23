@@ -21,12 +21,8 @@ for label,instruction in ((command[:-1],'-') if command[-1] == '-' else command.
     if index != -1 and instruction == '-':
         box.pop(index)
     elif index != -1:
-        box[index][1] = instruction
+        box[index][1] = int(instruction)
     elif instruction != '-':
-        box.append([label, instruction])
+        box.append([label, int(instruction)])
 
-focusing_power = 0
-for box_index in boxes:
-    for index in range(len(boxes[box_index])):
-        focusing_power += (box_index + 1) * (index + 1) * int(boxes[box_index][index][1])
-print(focusing_power)
+print(sum((box_index+1) * slot * lens_info[1] for box_index,box in boxes.items() for slot,lens_info in enumerate(box, start=1)))
