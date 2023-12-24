@@ -5,41 +5,41 @@ heat_loss = {(x+y*1j):int(char) for y,line in enumerate(open("day17/day17.txt"))
 
 source = 0
 destination = max(heat_loss, key=abs)
-tie_breaker = 0
-straight_line_max = 4
-search_heap = [(0,0,source,1,{source}), (0,0,source,1j,{source})]
-# heat dissipation of this path, tie-breaker, location, current travel direction, nodes in path
-overall_seen = set()
-# coordinate, direction, time until direction change
-while len(search_heap) > 0:
-    heat, _, coord, direction, visited = heappop(search_heap)
-    if coord == destination:
-        print(heat)
-        nodes_traversed = visited
-        break
-    
-    if (coord, direction) in overall_seen:
-        continue
-    overall_seen.add((coord, direction))
 
-    match direction:
-        case 1 | -1:
-            directions = {1j, -1j}
-        case 1j | -1j:
-            directions = {1, -1}
+def steer_path(minimum_distance, maximum_distance):
+    tie_breaker = 0
+    search_heap = [(0,0,source,1,{source}), (0,0,source,1j,{source})]
+    # heat dissipation of this path, tie-breaker, location, current travel direction, nodes in path
+    overall_seen = set()
+    # coordinate, direction, time until direction change
+    while len(search_heap) > 0:
+        heat, _, coord, direction, visited = heappop(search_heap)
+        if coord == destination:
+            print(heat)
+            return visited
+        
+        if (coord, direction) in overall_seen:
+            continue
+        overall_seen.add((coord, direction))
 
-    for direction in directions:
-        heat_diff = 0
-        extra_visited = set()
-        for distance in range(1,straight_line_max):
-            neighbour = coord + distance * direction
-            if neighbour not in heat_loss or neighbour in visited:
-                continue
-            heat_diff += heat_loss[neighbour]
-            extra_visited.add(neighbour)
-            heappush(search_heap, (heat + heat_diff, (tie_breaker := tie_breaker + 1), neighbour, direction, visited | extra_visited))
+        match direction:
+            case 1 | -1:
+                directions = {1j, -1j}
+            case 1j | -1j:
+                directions = {1, -1}
 
+        for direction in directions:
+            extra_visited = {coord+offset*direction for offset in range(1,minimum_distance) if coord+offset*direction in heat_loss}
+            heat_diff = sum(heat_loss[intermediary] for intermediary in extra_visited)
+            for distance in range(minimum_distance,maximum_distance):
+                neighbour = coord + distance * direction
+                if neighbour not in heat_loss or neighbour in visited:
+                    continue
+                heat_diff += heat_loss[neighbour]
+                extra_visited.add(neighbour)
+                heappush(search_heap, (heat + heat_diff, (tie_breaker := tie_breaker + 1), neighbour, direction, visited | extra_visited))
 
+nodes_traversed = steer_path(4, 11)
 """import networkx as nx
 import matplotlib.pyplot as plt
 factory_graph = nx.Graph()
