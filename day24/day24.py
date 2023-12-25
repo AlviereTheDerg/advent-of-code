@@ -38,15 +38,35 @@ for index, first_stone in enumerate(hailstone_information):
         if type(reduced) != type(None):
             x1,y1 = px1+vx1*reduced[0], py1+vy1*reduced[0]
             x2,y2 = px2+vx2*reduced[1], py2+vy2*reduced[1]
-            #print(x1,y1,x2,y2)
             if isclose(x1,x2) and isclose(y1,y2):
                 if lower_bound <= x1 and x1 <= upper_bound and lower_bound <= y1 and y1 <= upper_bound:
                     if reduced[0] >= 0 and reduced[1] >= 0:
-                #        print("hit inside")
                         result += 1
-                #    else:
-                #        print("hit in the past")
-                #else:
-                #    print("hit outside")
-        #print(stone_array)
 print(result)
+
+trajectory_construct_xy = np.zeros((4,5))
+trajectory_construct_xz = np.zeros((4,5))
+for index in range(4):
+    first_stone = hailstone_information[index]
+    px1,py1,pz1 = first_stone[0][0:3]
+    vx1,vy1,vz1 = first_stone[1][0:3]
+    second_stone = hailstone_information[index+1]
+    px2,py2,pz2 = second_stone[0][0:3]
+    vx2,vy2,vz2 = second_stone[1][0:3]
+    trajectory_construct_xy[index][0] = vy2 - vy1
+    trajectory_construct_xy[index][1] = vx1 - vx2
+    trajectory_construct_xy[index][2] = py1 - py2
+    trajectory_construct_xy[index][3] = px2 - px1
+    trajectory_construct_xy[index][4] = (py1*vx1 - py2*vx2) - (px1*vy1 - px2*vy2)
+
+    trajectory_construct_xz[index][0] = vz2 - vz1
+    trajectory_construct_xz[index][1] = vx1 - vx2
+    trajectory_construct_xz[index][2] = pz1 - pz2
+    trajectory_construct_xz[index][3] = px2 - px1
+    trajectory_construct_xz[index][4] = (pz1*vx1 - pz2*vx2) - (px1*vz1 - px2*vz2)
+trajectory_answer_xy = reduce(trajectory_construct_xy)
+trajectory_answer_xz = reduce(trajectory_construct_xz)
+print(trajectory_answer_xy)
+print(trajectory_answer_xz)
+print(int(trajectory_answer_xy[0]), int(trajectory_answer_xy[1]), int(trajectory_answer_xz[1]))
+print(int(trajectory_answer_xy[0]) + int(trajectory_answer_xy[1]) + int(trajectory_answer_xz[1]))
