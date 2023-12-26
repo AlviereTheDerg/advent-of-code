@@ -1,6 +1,6 @@
 
 import networkx as nx
-import matplotlib.pyplot as plt
+from collections import deque
 
 block_coords = dict()
 block_ids = dict()
@@ -42,10 +42,28 @@ for index in fall_order:
     block_ids[index] = this_batch
     block_coords.update({coord:index for coord in this_batch})
 
-deletables = set(node for node in layings)
+deletables = set()
 for node in layings:
     for parent in layings.predecessors(node):
         if layings.out_degree(parent) == 1:
-            deletables.remove(node)
             break
-print(len(deletables))
+    else:
+        deletables.add(node)
+print("pt1", len(deletables))
+
+result = 0
+for node in layings.nodes():
+    relying = {node}
+    search = deque()
+    for parent in layings.predecessors(node):
+        search.append(parent)
+    while search:
+        node = search.popleft()
+        children = set(layings.successors(node))
+        if children == (relying & children):
+            relying.add(node)
+            for parent in layings.predecessors(node):
+                search.append(parent)
+    result += len(relying) - 1
+
+print("pt2", result)
