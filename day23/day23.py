@@ -1,6 +1,6 @@
 
 import networkx as nx
-import matplotlib.pyplot as plt
+from collections import deque
 
 map_input = {x+y*1j:char for y,line in enumerate(open("day23/day23.txt")) for x,char in enumerate(line.strip()) if char != '#'}
 start = min(map_input, key=lambda coord: coord.imag)
@@ -20,11 +20,6 @@ for coord,symbol in map_input.items():
     if symbol in {'^','.'}:
         if coord-1j in map_input and map_input[coord-1j] != 'v':
             snow_island.add_edge(coord, coord-1j)
-
-#pos = {coord:[coord.real, -coord.imag] for coord in map_input}
-#nx.draw(snow_island, pos)
-#nx.draw_networkx_labels(snow_island, pos, map_input)
-#plt.show()
 
 # assumption: this collapses the maze to a DAG
 distance = 'distance'
@@ -59,7 +54,27 @@ for node in reversed(topological):
         path_lengths[child] = max(path_lengths[child], path_lengths[node] + snow_island.edges[node,child][distance])
 print(max(path_lengths.values()))
 
-#nx.draw(snow_island, pos)
-#nx.draw_networkx_labels(snow_island, pos, map_input)#{coord:coord for coord in snow_island.nodes})
-#nx.draw_networkx_edge_labels(snow_island, pos, {(u,v):snow_island.edges[u,v][distance] for u,v in snow_island.edges})
-#plt.show()
+snow_island_slopeless = nx.Graph(snow_island)
+longest_path = 0
+searching = deque()
+searching.append((start, set(), list()))
+search_iters = 0
+last_find = 0
+while searching:
+    search_iters += 1
+    if search_iters - last_find > 1000000:
+        print("Popcorning done")
+        break
+    node,visited,path = searching.pop()
+    visited.add(node)
+    path.append(node)
+    for child in snow_island_slopeless.neighbors(node):
+        if child not in visited:
+            searching.append((child, visited.copy(), path.copy()))
+    
+    if (new_longest_path := sum((snow_island_slopeless.edges[path[index],path[index+1]][distance] for index in range(len(path)-1)))) > longest_path and path[-1] == end:
+        longest_path = new_longest_path
+        last_find = search_iters
+    visited.remove(node)
+    path.pop()
+print(longest_path)
