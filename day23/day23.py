@@ -1,6 +1,7 @@
 
 import networkx as nx
 from collections import deque
+from itertools import pairwise
 
 map_input = {x+y*1j:char for y,line in enumerate(open("day23/day23.txt")) for x,char in enumerate(line.strip()) if char != '#'}
 start = min(map_input, key=lambda coord: coord.imag)
@@ -57,24 +58,31 @@ print(max(path_lengths.values()))
 snow_island_slopeless = nx.Graph(snow_island)
 longest_path = 0
 searching = deque()
-searching.append((start, set(), list()))
+searching.append((start, set(), list(), 0))
 search_iters = 0
 last_find = 0
+
+import time
+start_time = time.time()
 while searching:
     search_iters += 1
     if search_iters - last_find > 1000000:
         print("Popcorning done")
         break
-    node,visited,path = searching.pop()
+    node,visited,path,current_distance = searching.pop()
     visited.add(node)
     path.append(node)
+    
+    if end in snow_island_slopeless.neighbors(node):
+        current_distance += snow_island_slopeless.edges[node,end][distance]
+        path.append(end)
+        if current_distance > longest_path:
+            longest_path = current_distance
+            last_find = search_iters
+        continue
+    
     for child in snow_island_slopeless.neighbors(node):
         if child not in visited:
-            searching.append((child, visited.copy(), path.copy()))
-    
-    if (new_longest_path := sum((snow_island_slopeless.edges[path[index],path[index+1]][distance] for index in range(len(path)-1)))) > longest_path and path[-1] == end:
-        longest_path = new_longest_path
-        last_find = search_iters
-    visited.remove(node)
-    path.pop()
+            searching.append((child, visited.copy(), path.copy(), current_distance + snow_island_slopeless.edges[node,child][distance]))
 print(longest_path)
+print("--- %s seconds ---" % (time.time() - start_time))
