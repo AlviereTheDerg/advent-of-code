@@ -39,6 +39,16 @@ public class day02 {
             int depth = data.stream().filter(Move::getVertical).mapToInt(Move::getDistance).sum();
             int horizontal = data.stream().filter(Predicate.not(Move::getVertical)).mapToInt(Move::getDistance).sum();
             System.out.println(depth * horizontal);
+
+            int aim = 0;
+            long current_depth = 0;
+            for (Move move : data) {
+                if (move.getVertical())
+                    aim += move.getDistance();
+                else
+                    current_depth += aim * move.getDistance();
+            }
+            System.out.println(current_depth * horizontal);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
