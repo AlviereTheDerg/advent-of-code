@@ -28,19 +28,16 @@ public class day04 {
         public boolean draw(int call) {
             if (board_positions.containsKey(call)) {
                 board_calls[board_positions.get(call)] = true;
+                last_call = call;
+                return this.solved(board_positions.get(call));
             }
-            last_call = call;
-            return this.solved();
+            return false;
         }
 
-        public boolean solved() {
-            boolean rows = IntStream.range(0,5).boxed().anyMatch((r) -> {
-                return IntStream.range(0,5).map(c -> 5*r+c).boxed().allMatch(i -> board_calls[i]);
-            });
-            boolean columns = IntStream.range(0,5).boxed().anyMatch((r) -> {
-                return IntStream.range(0,5).map(c -> r+5*c).boxed().allMatch(i -> board_calls[i]);
-            });
-            return rows || columns;
+        private boolean solved(int position) {
+            boolean row = IntStream.range(0,5).map(c -> 5*(position/5) + c).boxed().allMatch(i -> board_calls[i]);
+            boolean column = IntStream.range(0,5).map(r -> 5*r + (position%5)).boxed().allMatch(i -> board_calls[i]);
+            return row || column;
         }
 
         public int score() {
