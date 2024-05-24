@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.IntStream;
+import java.util.Iterator;
 
 public class day04 {
     private static class BingoCard {
@@ -60,16 +61,26 @@ public class day04 {
             input_scanner.close();
 
             BingoCard selected = null;
-            boolean escape = false;
-            for (int call : calls) {
-                for (BingoCard card : cards) {
+            Iterator<Integer> call_selector = calls.iterator();
+            while (selected == null && call_selector.hasNext()) {
+                int call = call_selector.next();
+                for (Iterator<BingoCard> card_selector = cards.iterator(); card_selector.hasNext();) {
+                    BingoCard card = card_selector.next();
                     if (card.draw(call)) {
-                        escape = true;
                         selected = card;
+                        card_selector.remove();
+                        break;
                     }
-                    if (escape) break;
                 }
-                if (escape) break;
+            }
+            System.out.println(selected != null ? selected.score() : "null");
+
+            selected = null;
+            while (cards.size() > 0 && call_selector.hasNext()) {
+                int call = call_selector.next();
+                cards = cards.stream().filter(c -> !c.draw(call)).toList();
+                if (cards.size() == 1)
+                    selected = cards.get(0);
             }
             System.out.println(selected != null ? selected.score() : "null");
         } catch (Exception e) {
