@@ -84,6 +84,19 @@ public class day05 {
         return new Line(make_coordinate(coord_strings[0]), make_coordinate(coord_strings[1]));
     }
 
+    public static int calculate_overlaps(List<Line> lines) {
+        Map<Coordinate, Integer> positions = new HashMap<>();
+        for (Line line : lines) {
+            List<Coordinate> points = line.get_points();
+            for (Coordinate point : points) {
+                if (!positions.containsKey(point))
+                    positions.put(point, 0);
+                positions.put(point, positions.get(point) + 1);
+            }
+        }
+        return positions.entrySet().stream().mapToInt(x -> x.getValue() > 1 ? 1 : 0).sum();
+    }
+
     public static void main(String[] args) {
         try {
             // input file -> list of Integer
@@ -93,18 +106,8 @@ public class day05 {
                     .toList();
             
             List<Line> cardinals = data.stream().filter(Line::cardinal).toList();
-            Map<Coordinate, Integer> positions = new HashMap<>();
-            for (Line line : cardinals) {
-                List<Coordinate> points = line.get_points();
-                for (Coordinate point : points) {
-                    if (!positions.containsKey(point))
-                        positions.put(point, 0);
-                    positions.put(point, positions.get(point) + 1);
-                }
-            }
-            int multi_points = positions.entrySet().stream().mapToInt(x -> x.getValue() > 1 ? 1 : 0).sum();
-            System.out.println(multi_points);
-
+            System.out.println(calculate_overlaps(cardinals));
+            System.out.println(calculate_overlaps(data));
         } catch (Exception e) {
             System.out.println(e.toString());
         }
