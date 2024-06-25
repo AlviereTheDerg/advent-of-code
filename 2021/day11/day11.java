@@ -117,11 +117,16 @@ public class day11 {
                     .toArray(int[][]::new);
             width = data[0].length; height = data.length;
 
+            int cycles = 1;
             int result = 0;
-            for (int i = 0; i < 100; i++)
+            for (; cycles <= 100; cycles++)
                 result += step();
             System.out.println(result);
             
+            while (step() < height * width)
+                cycles++;
+            System.out.println(cycles);
+
         } catch (Exception e) {
             System.out.println(e.toString());
         }
