@@ -8,14 +8,35 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class day14 {
-    public static String step(Map<String, Character> insertions, String data_line_in) {
-        StringBuilder data_line_out = new StringBuilder();
-        for (int index = 0; index < data_line_in.length()-1; index++) {
-            data_line_out.append(data_line_in.charAt(index));
-            data_line_out.append(insertions.get(data_line_in.substring(index, index+2)));
+    public static void count_after_N_grows(Map<String, Character> insertion_rules, String template, int n) {
+        // convert template to map of polymer pair counts
+        Map<String, Long> polymer_pairs = new HashMap<>();
+        for (int index = 0; index < template.length() - 1; index++)
+            polymer_pairs.put(template.substring(index, index+2), polymer_pairs.getOrDefault(template.substring(index, index+2),0l)+1);
+        // convert template to map of element counts
+        Map<Character, Long> element_counts = new HashMap<>();
+        for (char c : template.toCharArray())
+            element_counts.put(c, element_counts.getOrDefault(c, 0l) + 1);
+
+        for (int index = 0; index < n; index++) {
+            Map<String, Long> next_polymer_pairs = new HashMap<>();
+            for (Map.Entry<String, Long> pair : polymer_pairs.entrySet()) {
+                // identify the inserted character, get the resultant element pairs from the split
+                char inserted = insertion_rules.get(pair.getKey());
+                String  left  = String.format("%c%c", pair.getKey().charAt(0), inserted),
+                        right = String.format("%c%c", inserted, pair.getKey().charAt(1));
+
+                // increment the left pair, right pair, and element count
+                next_polymer_pairs.put(left , next_polymer_pairs.getOrDefault(left , 0l) + pair.getValue());
+                next_polymer_pairs.put(right, next_polymer_pairs.getOrDefault(right, 0l) + pair.getValue());
+                element_counts.put(inserted, element_counts.getOrDefault(inserted, 0l) + pair.getValue());
+            }
+            polymer_pairs = next_polymer_pairs;
         }
-        data_line_out.append(data_line_in.charAt(data_line_in.length()-1));
-        return data_line_out.toString();
+
+        char    max_char = Collections.max(element_counts.entrySet(), Map.Entry.comparingByValue()).getKey(),
+                min_char = Collections.min(element_counts.entrySet(), Map.Entry.comparingByValue()).getKey();
+        System.out.println(element_counts.get(max_char) - element_counts.get(min_char));
     }
     
     public static void main(String[] args) {
@@ -29,18 +50,8 @@ public class day14 {
                 .collect(Collectors.toMap(x -> x[0], x -> x[1].charAt(0)));
             input_scanner.close();
 
-            for (int index = 1; index <= 10; index++) {
-                data_line = step(insertions, data_line);
-            }
-
-            Map<Character, Integer> element_counts = new HashMap<>();
-            for (char c : data_line.toCharArray()) {
-                element_counts.put(c, element_counts.getOrDefault(c, 0) + 1);
-            }
-            char    max_char = Collections.max(element_counts.entrySet(), Map.Entry.comparingByValue()).getKey(),
-                    min_char = Collections.min(element_counts.entrySet(), Map.Entry.comparingByValue()).getKey();
-            System.out.println(element_counts.get(max_char) - element_counts.get(min_char));
-
+            count_after_N_grows(insertions, data_line, 10);
+            count_after_N_grows(insertions, data_line, 40);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
