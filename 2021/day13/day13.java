@@ -2,6 +2,7 @@
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -71,6 +72,19 @@ public class day13 {
         }
     }
 
+    public static void print_dots(Set<Coordinate> dots) {
+        int max_x = dots.stream().mapToInt(coord -> coord.x).max().getAsInt(), 
+            max_y = dots.stream().mapToInt(coord -> coord.y).max().getAsInt();
+        
+        for (int row_index = 0; row_index <= max_y; row_index++) {
+            final int row_id = row_index;
+            Set<Integer> column_vals = dots.stream().filter(coord -> coord.y == row_id).map(coord -> coord.x).collect(Collectors.toSet());
+            for (int column_index = 0; column_index <= max_x; column_index++)
+                System.out.print(column_vals.contains(column_index) ? "#" : ".");
+            System.out.println();
+        }
+    }
+
     public static void main(String[] args) {
         try {
             File input_file = new File("2021/day13/day13.txt");
@@ -87,6 +101,9 @@ public class day13 {
             input_scanner.close();
 
             System.out.println(folds.get(0).enact_fold(dots).size());
+            for (FoldToken fold : folds)
+                dots = fold.enact_fold(dots);
+            print_dots(dots);
             
         } catch (Exception e) {
             System.out.println(e.toString());
