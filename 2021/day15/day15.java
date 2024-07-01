@@ -44,13 +44,34 @@ public class day15 {
     private static int width, height;
     private static List<Coordinate> neighbours = Arrays.asList(
         new Coordinate(0, 1), new Coordinate(0, -1), new Coordinate(1, 0), new Coordinate(-1, 0));
-
-    public static boolean is_valid_coord(Coordinate coord) {
-        return 0 <= coord.x && coord.x < width && 0 <= coord.y && coord.y < height;
+    
+    private static interface CoordReader {
+        public boolean is_valid_coord(Coordinate coord);
+        public Integer read_coord(Coordinate coord);
     }
 
-    public static Integer read_coord(Coordinate coord) {
-        return is_valid_coord(coord) ? data[coord.y][coord.x] : null;
+    private static class NormalCoord implements CoordReader {
+        public boolean is_valid_coord(Coordinate coord) {
+            return 0 <= coord.x && coord.x < width && 0 <= coord.y && coord.y < height;
+        }
+    
+        public Integer read_coord(Coordinate coord) {
+            return is_valid_coord(coord) ? data[coord.y][coord.x] : null;
+        }
+    }
+
+    private static class ExpandedCoord implements CoordReader {
+        public boolean is_valid_coord(Coordinate coord) {
+            return 0 <= coord.x && coord.x < 5*width && 0 <= coord.y && coord.y < 5*height;
+        }
+    
+        public Integer read_coord(Coordinate coord) {
+            if (!is_valid_coord(coord)) return null;
+            int read_result = data[coord.y % height][coord.x % width];
+            read_result += (coord.y / height) + (coord.x / width);
+            while (read_result > 9) read_result -= 9;
+            return read_result;
+        }
     }
 
     private static class DistanceToken implements Comparable<DistanceToken> {
@@ -67,7 +88,7 @@ public class day15 {
         }
     };
 
-    public static int dijkstra(Coordinate start, Coordinate end) {
+    public static int dijkstra(CoordReader reader, Coordinate start, Coordinate end) {
         Set<Coordinate> expanded = new HashSet<>();
         PriorityQueue<DistanceToken> queue = new PriorityQueue<>();
         queue.add(new DistanceToken(start, 0));
@@ -79,8 +100,8 @@ public class day15 {
             
             for (Coordinate neighbour : neighbours) {
                 neighbour = neighbour.add(current.location);
-                if (!is_valid_coord(neighbour)) continue;
-                int neighbour_dist = current.distance + read_coord(neighbour);
+                if (!reader.is_valid_coord(neighbour)) continue;
+                int neighbour_dist = current.distance + reader.read_coord(neighbour);
                 if (end.equals(neighbour)) return neighbour_dist;
                 queue.add(new DistanceToken(neighbour, neighbour_dist));
             }
@@ -96,7 +117,8 @@ public class day15 {
                     .toArray(int[][]::new);
             width = data[0].length; height = data.length;
 
-            System.out.println(dijkstra(new Coordinate(0, 0), new Coordinate(width-1, height-1)));
+            System.out.println(dijkstra(new NormalCoord(), new Coordinate(0, 0), new Coordinate(width-1, height-1)));
+            System.out.println(dijkstra(new ExpandedCoord(), new Coordinate(0, 0), new Coordinate(5*width-1, 5*height-1)));
         } catch (Exception e) {
             System.out.println(e.toString());
         }
