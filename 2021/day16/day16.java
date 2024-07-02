@@ -44,6 +44,20 @@ public class day16 {
             return version + subpackets.stream().mapToInt(Packet::extract_cumulative_version).sum();
         }
 
+        public long calculate() {
+            switch (type_id) {
+                case 0: return subpackets.stream().mapToLong(Packet::calculate).sum();
+                case 1: return subpackets.stream().mapToLong(Packet::calculate).reduce(1l, (x,y) -> x*y);
+                case 2: return subpackets.stream().mapToLong(Packet::calculate).min().getAsLong();
+                case 3: return subpackets.stream().mapToLong(Packet::calculate).max().getAsLong();
+                case 4: return literal_value;
+                case 5: return subpackets.get(0).calculate() > subpackets.get(1).calculate() ? 1 : 0;
+                case 6: return subpackets.get(0).calculate() < subpackets.get(1).calculate() ? 1 : 0;
+                case 7: return subpackets.get(0).calculate() == subpackets.get(1).calculate() ? 1 : 0;
+            }
+            return -1;
+        }
+
         public String toString() {
             if (type_id == 4)
                 return String.format("(%d-%d-%d)", version, type_id, literal_value);
@@ -80,6 +94,7 @@ public class day16 {
             
             Packet outermost_packet = new Packet();
             System.out.println(outermost_packet.extract_cumulative_version());
+            System.out.println(outermost_packet.calculate());
         } catch (Exception e) {
             System.out.println(e.toString());
         }
