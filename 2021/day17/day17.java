@@ -63,13 +63,28 @@ public class day17 {
             && target_up   >= position.y && position.y >= target_down;
     }
 
-    public static boolean enters_target(Coordinate velocity) {
-        Coordinate here = null;
+    public static boolean enters_target(int x, int y) {
+        Coordinate here = null, velocity = new Coordinate(x, y);
         for (int tick = 1;; tick++) {
             here = coordinate_after_ticks(velocity, tick);
             if (coordinate_within_target(here)) return true;
             if (here.x > target_right || here.y < target_down) return false;
         }
+    }
+
+    public static int trajectories_that_enter_target() {
+        // cheeky shorthand to trim impossible solutions
+        int min_x, max_x, min_y, max_y;
+        min_x = (int) Math.sqrt(target_left * 2.0) + 1; // minimum x needed to get within the band
+        max_x = target_right; // x > target_right means first tick goes beyond the target and cannot come back
+        min_y = target_down; // y < target_down means same as prev
+        max_y = -target_down - 1; // upwards launches will hit y_pos=0, and on next tick descend initial_y_vel+1, so same as prev
+        int found_velocities = 0;
+        for (int y = min_y; y <= max_y; y++)
+            for (int x = min_x; x <= max_x; x++)
+                if (enters_target(x, y))
+                    found_velocities++;
+        return found_velocities;
     }
 
     private static int target_left, target_right, target_up, target_down;
@@ -90,8 +105,10 @@ public class day17 {
             // thus, find a y that is valid: positive y velocity eventually return to y=0 with -y_vel-1
             // can be simplified as the bottom of the target decreased by 1
             int part_1_y = -target_down - 1;
-            System.out.println(enters_target(new Coordinate(part_1_x, part_1_y)));
+            System.out.println(enters_target(part_1_x, part_1_y));
             System.out.println(triangularate(part_1_y));
+
+            System.out.println(trajectories_that_enter_target());
 
         } catch (Exception e) {
             System.out.println(e.toString());
