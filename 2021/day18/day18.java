@@ -151,6 +151,8 @@ public class day18 {
         }
 
         public static SnailfishNumber add(SnailfishNumber A, SnailfishNumber B) {
+            A = new SnailfishNumber(A.toString(), null);
+            B = new SnailfishNumber(B.toString(), null);
             SnailfishNumber result = new SnailfishNumber(A, B, null);
             result.reduce();
             return result;
@@ -183,6 +185,18 @@ public class day18 {
                 else
                     result = SnailfishNumber.add(result, entry);
             System.out.println(result.magnitude());
+
+            int largest = 0;
+            for (int i = 0; i < data.size(); i++) {
+                for (int j = 0; j < data.size(); j++) {
+                    if (i == j) continue;
+                    largest = Math.max(largest, SnailfishNumber.add(
+                        data.get(i), 
+                        data.get(j)
+                    ).magnitude());
+                }
+            }
+            System.out.println(largest);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
