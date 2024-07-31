@@ -131,21 +131,21 @@ public class day19 {
         public Detector(String raw_input) {
             String[] split_input = raw_input.split("\n");
 
-            // get the beacon id
+            // get the scanner id
             Matcher id_extractor = Pattern.compile("^--- scanner (\\d+) ---$").matcher(split_input[0]);
             id_extractor.find();
             id = Integer.parseInt(id_extractor.group(1));
 
+            // extract all beacons
             beacons = new ArrayList<>();
             for (int i = 1; i < split_input.length; i++)
                 beacons.add(new Coordinate(split_input[i]));
 
+            // construct complete graph of beacons
             edges = new HashSet<>();
             for (int i = 0; i < beacons.size(); i++)
                 for (int j = i+1; j < beacons.size(); j++)
                     edges.add(new Edge(beacons.get(i), beacons.get(j)));
-            if (edges.size() != (beacons.size() * (beacons.size() - 1))/2)
-                System.out.println("Uh oh!");
         }
 
         public boolean shares_overlap(Detector other) {
@@ -158,55 +158,39 @@ public class day19 {
             return String.format("%d: %s", id, beacons.toString());
         }
 
-        private Edge[] get_matching_edge(Detector anchor) {
+        private Edge[] get_matching_edges(Detector anchor) {
             HashSet<Edge> anchored_overlap = new HashSet<>(anchor.edges), unanchored_overlap = new HashSet<>(this.edges);
             anchored_overlap.retainAll(unanchored_overlap);
             unanchored_overlap.retainAll(anchored_overlap);
-            System.out.println(String.format("Detectors %d and %d overlap %d and %d edges", this.id, anchor.id, unanchored_overlap.size(), anchored_overlap.size()));
 
             Edge anchored_edge_a = anchored_overlap.iterator().next();
             Edge unanchored_edge_a = unanchored_overlap.stream().filter(edge -> edge.sq_dist == anchored_edge_a.sq_dist).toList().get(0);
 
-            Coordinate anchored_coordinate_a = anchored_edge_a.a, anchored_coordinate_b = anchored_edge_a.b;
-            Edge anchored_edge_b = anchored_overlap.stream().filter(edge -> edge.contains(anchored_coordinate_a) && edge.sq_dist != anchored_edge_a.sq_dist).toList().get(0);
-            List<Edge> sample_A = unanchored_overlap.stream().filter(edge -> edge.sq_dist == anchored_edge_b.sq_dist).toList();
-            if (sample_A.size() != 1) System.out.println("UH OH!");
-            Edge unanchored_edge_b = sample_A.get(0);
+            Edge anchored_edge_b = anchored_overlap.stream().filter(edge -> edge.contains(anchored_edge_a.a) && edge.sq_dist != anchored_edge_a.sq_dist).toList().get(0);
+            Edge unanchored_edge_b = unanchored_overlap.stream().filter(edge -> edge.sq_dist == anchored_edge_b.sq_dist).toList().get(0);
+
             Coordinate unanchored_coordinate = (unanchored_edge_b.contains(unanchored_edge_a.a)) ? unanchored_edge_a.a : unanchored_edge_a.b;
 
-            Edge constructed_anchored_edge = new Edge(anchored_coordinate_a.rotate(anchor.orientation).add(anchor.position), anchored_coordinate_b.rotate(anchor.orientation).add(anchor.position));
-            System.out.println(String.format("Anchor edge %s becoming %s", anchored_edge_a.toString(), constructed_anchored_edge.toString()));
-            Edge constructed_unanchored_edge = new Edge(unanchored_coordinate, unanchored_edge_a.other_end_of(unanchored_coordinate));
-            return new Edge[]{constructed_anchored_edge, constructed_unanchored_edge};
+            return new Edge[]{
+                new Edge(anchored_edge_a.a.rotate(anchor.orientation).add(anchor.position), anchored_edge_a.b.rotate(anchor.orientation).add(anchor.position)), 
+                new Edge(unanchored_coordinate, unanchored_edge_a.other_end_of(unanchored_coordinate))
+            };
         }
 
         public void align_to(Detector anchor) {
             if (!this.shares_overlap(anchor)) throw new IllegalArgumentException("Detectors do not share overlap");
-            System.out.println(String.format("Scanner %d anchoring to %d", this.id, anchor.id));
-            Edge[] matching_edges = this.get_matching_edge(anchor);
-            System.out.println(String.format("Aligning anchor edge %s to edge %s", matching_edges[0].toString(), matching_edges[1].toString()));
+            Edge[] matching_edges = this.get_matching_edges(anchor);
 
-            Edge anchored_edge = matching_edges[0], unanchored_edge = matching_edges[1];
-            Coordinate anchored_coordinate = anchored_edge.a, unanchored_coordinate = unanchored_edge.a;
-
-            Coordinate anchor_diff = anchored_coordinate.sub(anchored_edge.other_end_of(anchored_coordinate));
-            Coordinate unanchor_diff = unanchored_coordinate.sub(unanchored_edge.other_end_of(unanchored_coordinate));
-
-            System.out.println(anchor_diff);
-            System.out.println(unanchor_diff);
+            Coordinate anchor_diff = matching_edges[0].a.sub(matching_edges[0].other_end_of(matching_edges[0].a));
+            Coordinate unanchor_diff = matching_edges[1].a.sub(matching_edges[1].other_end_of(matching_edges[1].a));
 
             Coordinate unanchor_orientation = unanchor_diff.get_relative_rotation(anchor_diff);
-            System.out.println(unanchor_orientation);
             if (unanchor_orientation == null)
                 throw new IllegalArgumentException(String.format("Anchor diff %s, unanchor diff %s", anchor_diff.toString(), unanchor_diff.toString()));
 
-            Coordinate alt_anchored_coordinate = anchored_coordinate;
-            Coordinate alt_unanchored_coordinate = unanchored_coordinate.rotate(unanchor_orientation);
-            Coordinate unanchor_position = alt_anchored_coordinate.sub(alt_unanchored_coordinate);
+            Coordinate unanchored_coordinate = matching_edges[1].a.rotate(unanchor_orientation);
+            Coordinate unanchor_position = matching_edges[0].a.sub(unanchored_coordinate);
             this.set_alignment(unanchor_position, unanchor_orientation);
-            Set<Coordinate> test = anchor.get_aligned_coords().stream().collect(Collectors.toSet());
-            test.retainAll(this.get_aligned_coords());
-            System.out.println(test.size());
         }
 
         public void set_alignment(Coordinate position, Coordinate orientation) {
@@ -230,12 +214,11 @@ public class day19 {
                 scanners.add(new Detector(input_scanner.next()));
             input_scanner.close();
 
-            HashSet<Detector> anchored = new HashSet<>();
             HashSet<Detector> unanchored = new HashSet<>(scanners);
             LinkedList<Detector> anchoring = new LinkedList<>();
             Detector anchor = scanners.get(0);
             anchor.set_alignment(new Coordinate(0,0,0), new Coordinate(0,0,0));
-            unanchored.remove(anchor); anchored.add(anchor); anchoring.add(anchor);
+            unanchored.remove(anchor); anchoring.add(anchor);
 
             while (anchoring.size() > 0) {
                 Iterator<Detector> iter = unanchored.iterator();
@@ -244,16 +227,16 @@ public class day19 {
                     if (!entry.shares_overlap(anchoring.getFirst())) continue;
                     iter.remove();
                     anchoring.addLast(entry);
-                    anchored.add(entry);
                     entry.align_to(anchoring.getFirst());
-                    System.out.println();
                 }
                 anchoring.pop();
             }
+
             HashSet<Coordinate> beacons = new HashSet<>();
-            for (Detector hehe : scanners)
-                beacons.addAll(hehe.get_aligned_coords());
+            for (Detector detector : scanners)
+                beacons.addAll(detector.get_aligned_coords());
             System.out.println(beacons.size());
+
         } catch (Exception e) {
             System.out.println(e.toString());
         }
