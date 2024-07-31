@@ -237,6 +237,14 @@ public class day19 {
                 beacons.addAll(detector.get_aligned_coords());
             System.out.println(beacons.size());
 
+            int part_2 = 0;
+            for (int i = 0; i < scanners.size(); i++)
+                for (int j = i+1; j < scanners.size(); j++) {
+                    Coordinate offset = scanners.get(i).position.sub(scanners.get(j).position);
+                    part_2 = Math.max(part_2, Math.abs(offset.x) + Math.abs(offset.y) + Math.abs(offset.z));
+                }
+            System.out.println(part_2);
+
         } catch (Exception e) {
             System.out.println(e.toString());
         }
