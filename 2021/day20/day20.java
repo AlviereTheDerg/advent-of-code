@@ -109,7 +109,14 @@ public class day20 {
             while (input_scanner.hasNext()) board.add(input_scanner.next());
             input_scanner.close();
             Image image = new Image(board);
-            image.enhance(); image.enhance();
+
+            int enhance_pt1 = 2, enhance_pt2 = 50;
+            for (int i = 0; i < enhance_pt1; i++)
+                image.enhance();
+            System.out.println(image.on_pixels.size());
+            
+            for (int i = enhance_pt1; i < enhance_pt2; i++)
+                image.enhance();
             System.out.println(image.on_pixels.size());
 
         } catch (Exception e) {
