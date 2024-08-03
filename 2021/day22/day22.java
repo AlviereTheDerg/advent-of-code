@@ -46,8 +46,8 @@ public class day22 {
                 Math.max(this.zs, that.zs), Math.min(this.zl, that.zl));
         }
 
-        public int volume() {
-            return mult * (xl - xs + 1) * (yl - ys + 1) * (zl - zs + 1);
+        public long volume() {
+            return ((long) mult) * (xl - xs + 1) * (yl - ys + 1) * (zl - zs + 1);
         }
 
         public String toString() {
@@ -55,7 +55,7 @@ public class day22 {
         }
     }
 
-    public static int get_on_cubes(List<Cube> cubes) {
+    public static long get_on_cubes(List<Cube> cubes) {
         // construct list of all chunks to enable/disable
         List<Cube> core_chunks = new ArrayList<>();
         for (Cube cube : cubes) {
@@ -74,7 +74,7 @@ public class day22 {
 
         // count squares based on chunks
         // on chunk is +, off chunk (intersect) is -
-        return core_chunks.stream().mapToInt(Cube::volume).sum();
+        return core_chunks.stream().mapToLong(Cube::volume).sum();
     }
 
     public static void main(String[] args) {
@@ -88,6 +88,7 @@ public class day22 {
             List<Cube> part_1_cubes = raw_cubes.stream().filter(x -> x.does_intersect(activation_zone)).map(x -> activation_zone.intersect(x)).toList();
             part_1_cubes.forEach(x -> x.mult *= -1);
             System.out.println(get_on_cubes(part_1_cubes));
+            System.out.println(get_on_cubes(raw_cubes));
             
         } catch (Exception e) {
             System.out.println(e.toString());
