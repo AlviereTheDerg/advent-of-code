@@ -6,15 +6,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class day23 {
     private static class Burrow {
         int[] hallway;
         List<List<Integer>> rooms;
         int[] steps;
+        int room_size;
 
         public Burrow(String raw_input) {
             int[] values = raw_input.replaceAll("[#\\.\\s]", "").chars().map(x -> x - 'A' + 1).toArray();
+            room_size = 2;
 
             hallway = new int[11]; // initializes to 0s
             steps = new int[4];
@@ -31,6 +35,7 @@ public class day23 {
             this.hallway = previous.hallway.clone();
             this.steps = previous.steps.clone();
             this.rooms = new ArrayList<>();
+            this.room_size = previous.room_size;
             for (List<Integer> room : previous.rooms)
                 this.rooms.add(new ArrayList<>(room));
 
@@ -40,7 +45,7 @@ public class day23 {
                 List<Integer> room = this.rooms.get(source / 2 - 1);
                 int entry = room.remove(room.size() - 1);
                 hallway[source] = entry;
-                steps[entry - 1] += 2 - room.size();
+                steps[entry - 1] += room_size - room.size();
             }
 
             // move around the hallway
@@ -52,7 +57,7 @@ public class day23 {
             if (destination % 2 == 0 && 2 <= destination && destination <= 8) {
                 List<Integer> room = this.rooms.get(destination / 2 - 1);
                 room.add(hallway[destination]);
-                steps[hallway[destination] - 1] += 3 - room.size();
+                steps[hallway[destination] - 1] += room_size + 1 - room.size();
                 hallway[destination] = 0;
             }
         }
@@ -118,10 +123,9 @@ public class day23 {
             );
         }
         public String toString() {
-            return String.format("#############\n#%s#\n##%s##\n  %s\n  #########",
+            return String.format("#############\n#%s#\n##%s\n  #########",
                 Arrays.stream(hallway).mapToObj(x -> represent_amphipod(x)).map(Object::toString).reduce("", String::concat),
-                stringify_row(1),
-                stringify_row(0)
+                IntStream.range(0, room_size).map(x -> room_size - x).mapToObj(x -> stringify_row(x-1)).collect(Collectors.joining("\n  "))
             );
         }
 
@@ -134,6 +138,18 @@ public class day23 {
         }
         public int hashCode() {
             return this.toString().hashCode();
+        }
+
+        public void unfold() {
+            room_size += 2;
+            rooms.get(0).add(1, 4);
+            rooms.get(0).add(2, 4);
+            rooms.get(1).add(1, 2);
+            rooms.get(1).add(2, 3);
+            rooms.get(2).add(1, 1);
+            rooms.get(2).add(2, 2);
+            rooms.get(3).add(1, 3);
+            rooms.get(3).add(2, 1);
         }
     }
 
@@ -161,7 +177,8 @@ public class day23 {
     public static void main(String[] args) {
         try {
             Burrow starting = new Burrow(Files.lines(Paths.get("2021/day23/day23.txt")).reduce("", String::concat));
-            System.out.println(starting);
+            System.out.println(find_minimum_energy(starting));
+            starting.unfold();
             System.out.println(find_minimum_energy(starting));
         } catch (Exception e) {
             System.out.println(e.toString());
