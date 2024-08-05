@@ -37,7 +37,7 @@ public class day24 {
         }
     }
 
-    public static long part_1(List<MONADStage> stages) {
+    public static Map<Integer, Integer> extract_stack_pairings(List<MONADStage> stages) {
         // z is a stack
         // if A==1 OR w check fails: push w+C to stack
         // otherwise pop
@@ -55,7 +55,10 @@ public class day24 {
                 pairings.put(identification_stack.pop(), i);
             }
         }
+        return pairings;
+    }
 
+    public static long get_max_model_number(List<MONADStage> stages, Map<Integer, Integer> pairings) {
         // construct max model number from the pairs and their offsets
         int[] max_model = new int[stages.size()];
         for (Map.Entry<Integer,Integer> entry : pairings.entrySet()) {
@@ -66,6 +69,25 @@ public class day24 {
             } else {
                 max_model[entry.getKey()] = 9;
                 max_model[entry.getValue()] = 9 + difference;
+            }
+        }
+        long z = 0;
+        for (int i = 0; i < stages.size(); i++)
+            z = 10*z + max_model[i];
+        return z;
+    }
+
+    public static long get_min_model_number(List<MONADStage> stages, Map<Integer, Integer> pairings) {
+        // construct min model number from the pairs and their offsets
+        int[] max_model = new int[stages.size()];
+        for (Map.Entry<Integer,Integer> entry : pairings.entrySet()) {
+            int difference = stages.get(entry.getKey()).C + stages.get(entry.getValue()).B;
+            if (difference > 0) {
+                max_model[entry.getKey()] = 1;
+                max_model[entry.getValue()] = 1 + difference;
+            } else {
+                max_model[entry.getKey()] = 1 - difference;
+                max_model[entry.getValue()] = 1;
             }
         }
         long z = 0;
@@ -90,7 +112,9 @@ public class day24 {
             stages.add(new MONADStage(input_buffer));
             input_scanner.close();
 
-            System.out.println(part_1(stages));
+            Map<Integer, Integer> pairings = extract_stack_pairings(stages);
+            System.out.println(get_max_model_number(stages, pairings));
+            System.out.println(get_min_model_number(stages, pairings));
 
         } catch (Exception e) {
             System.out.println(e.toString());
