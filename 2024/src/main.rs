@@ -3,6 +3,7 @@ use std::{env, fs};
 
 mod day01;
 mod day02;
+mod day03;
 
 fn grab_input(input_name: &str) -> String {
     fs::read_to_string(format!("./inputs/{input_name}.txt")).unwrap()
@@ -17,6 +18,7 @@ fn main() {
     match day {
         1 => { day01::main(); },
         2 => { day02::main(); },
+        3 => { day03::main(); },
         _ => { println!("Day not recognized!"); },
     }
 }
