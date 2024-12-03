@@ -39,3 +39,6 @@
 
 # VSCode files
 .vscode
+
+# Rust compilation
+*/target
