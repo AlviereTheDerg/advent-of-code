@@ -21,10 +21,10 @@ fn count_occurrences(list: &Vec<isize>) -> HashMap<isize, isize> {
 fn part2(list1: &Vec<isize>, list2: &Vec<isize>) {
     let right = count_occurrences(list2);
 
-    let mut result: isize = 0;
-    for (id, count) in count_occurrences(list1).iter() {
-        result += id * count * right.get(id).unwrap_or(&0);
-    }
+    let result: isize = count_occurrences(list1).iter()
+        .map(|(id, count)| {
+            id * count * right.get(id).unwrap_or(&0)
+        }).sum();
     println!("{result}");
 }
 
