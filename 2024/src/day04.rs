@@ -1,54 +1,52 @@
 
 use crate::Coord;
+use itertools::Itertools;
 
 fn get_coord<'a>(space: &'a Vec<&str>, coord: Coord) -> Option<char> {
     space.get(coord.y as usize)?.chars().nth(coord.x as usize)
 }
 
 fn check(space: &Vec<&str>, start: Coord, dir: Coord) -> bool {
-    if (start + dir*3).x < 0 || (start + dir*3).x >= space.get(0).unwrap().len() as isize ||
-        (start + dir*3).y < 0 || (start + dir*3).y >= space.len() as isize
-        {return false;}
-
     let check = "XMAS";
     for i in 0..4 {
-        if get_coord(space, start + dir*i).unwrap() != check.chars().nth(i as usize).unwrap() {return false;}
+        if get_coord(space, start + dir*i) != check.chars().nth(i as usize) {return false;}
     }
     true
 }
 
 fn part1(input: &Vec<&str>, right: isize, down: isize) {
-    let mut result = 0;
-    for x in 0..right {
-        for y in 0..down {
-            if get_coord(&input, Coord{x,y}) != Some('X') {continue};
-            for xdiff in -1..=1 {
-                for ydiff in -1..=1 {
-                    if xdiff != 0 || ydiff != 0 {
-                        if check(&input, Coord{x,y}, Coord{x:xdiff,y:ydiff}) {result += 1;}
-                    }
-                }
-            }
-        }
-    }
+    let result = (0..right).cartesian_product(0..down)
+        .map(|(x,y)| Coord{x,y})
+        .cartesian_product(
+            (-1..=1).cartesian_product(-1..=1).filter_map(|(x,y)| 
+                if x != 0 || y != 0 {Some(Coord{x,y})} 
+                else {None}
+            )
+        ).filter(|(start, dir)| check(&input, *start, *dir))
+        .count();
     println!("{result}")
 }
 
 fn check2(input: &Vec<&str>, coord: Coord) -> bool {
     if get_coord(input, coord) != Some('A') {return false;}
-    let offsets = vec![Coord{x:-1,y:-1}, Coord{x:-1,y:1}, Coord{x:1,y:1}, Coord{x:1,y:-1}];    
-    let characters: Vec<char> = offsets.iter().filter_map(|&c| get_coord(input, c+coord)).collect();
-    if characters.iter().filter(|&c| c == &'S').count() != 2 || characters.iter().filter(|&c| c == &'M').count() != 2 {return false;}
-    characters.get(0) == characters.get(1) || characters.get(0) == characters.get(3)
+
+    let characters: Vec<char> = vec![Coord{x:-1,y:-1}, Coord{x:-1,y:1}, Coord{x:1,y:1}, Coord{x:1,y:-1}].iter()
+        .filter_map(|&c| get_coord(input, c+coord)).collect();
+
+    characters.len() == 4 &&
+    characters.iter().filter(|&c| c == &'S').count() == 2 &&
+    characters.iter().filter(|&c| c == &'M').count() == 2 && 
+    (
+        characters.get(0) == characters.get(1) || 
+        characters.get(0) == characters.get(3)
+    )
 }
 
 fn part2(input: &Vec<&str>, right: isize, down: isize) {
-    let mut result = 0;
-    for x in 0..right {
-        for y in 0..down {
-            if check2(&input, Coord{x,y}) {result += 1;}
-        }
-    }
+    let result = (0..right).cartesian_product(0..down)
+        .map(|(x,y)| Coord{x,y})
+        .filter(|&coord| check2(&input, coord))
+        .count();
     println!("{result}")
 }
 
