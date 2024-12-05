@@ -14,7 +14,55 @@ fn order(order_rules: &Vec<Vec<isize>>, print: &Vec<isize>) -> bool {
     true
 }
 
-fn part1(input: &str) {
+fn get_middle(print: &Vec<isize>) -> &isize {
+    print.get(print.len() / 2).unwrap()
+}
+
+fn part1(order_rules: &Vec<Vec<isize>>, prints: &Vec<Vec<isize>>) {
+    let mut result = 0;
+    for print in prints.iter() {
+        if order(&order_rules, print) {result += get_middle(print);}
+    }
+    println!("{result}");
+}
+
+fn force_order(order_rules: &Vec<Vec<isize>>, print: &Vec<isize>) -> Vec<isize> {
+    let mut result = Vec::new();
+
+    // edges :D
+    let mut order_rules: Vec<&Vec<isize>> = order_rules.iter().filter(|v| print.contains(v.get(0).unwrap()) && print.contains(v.get(1).unwrap())).collect();
+
+    // nodes with no incoming edges
+    let mut S: Vec<&isize> = print.iter().filter(|&n| 
+            order_rules.iter().filter(|&v| 
+                v.get(1).unwrap() == n)
+                .count() == 0
+        ).collect();
+    while !S.is_empty() {
+        let n = *S.pop().unwrap();
+        result.push(n);
+        order_rules = order_rules.iter().filter_map(|&v| if n != *v.get(0).unwrap() {Some(v)} else {None}).collect::<Vec<&Vec<isize>>>();
+        S.extend(print.iter().filter(|i| !result.contains(i)).filter(|&n| order_rules.iter().filter(|&v| 
+            v.get(1).unwrap() == n)
+            .count() == 0));
+    }
+
+    result
+}
+
+fn part2(order_rules: &Vec<Vec<isize>>, prints: &Vec<Vec<isize>>) {
+    let mut result = 0;
+    for print in prints.iter() {
+        if !order(order_rules, print) {
+            result += get_middle(&force_order(order_rules, print));
+        }
+    }
+    println!("{result}");
+}
+
+pub fn main() {
+    let input = crate::grab_input("day05");
+    
     let mut spliterator = input.split("\n\n");
     let order_rules = spliterator.next().unwrap();
     let prints = spliterator.next().unwrap();
@@ -31,14 +79,6 @@ fn part1(input: &str) {
         } else {None}
     ).collect();
 
-    let mut result = 0;
-    for print in prints.iter() {
-        if order(&order_rules, print) {result += print.get(print.len() / 2).unwrap();}
-    }
-    println!("{result}");
-}
-
-pub fn main() {
-    let input = crate::grab_input("day05");
-    part1(&input);
+    part1(&order_rules, &prints);
+    part2(&order_rules, &prints);
 }
