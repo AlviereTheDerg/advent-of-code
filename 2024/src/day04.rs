@@ -6,14 +6,6 @@ fn get_coord<'a>(space: &'a Vec<&str>, coord: Coord) -> Option<char> {
     space.get(coord.y as usize)?.chars().nth(coord.x as usize)
 }
 
-fn check(space: &Vec<&str>, start: Coord, dir: Coord) -> bool {
-    let check = "XMAS";
-    for i in 0..4 {
-        if get_coord(space, start + dir*i) != check.chars().nth(i as usize) {return false;}
-    }
-    true
-}
-
 fn part1(input: &Vec<&str>, right: isize, down: isize) {
     let result = (0..right).cartesian_product(0..down)
         .map(|(x,y)| Coord{x,y})
@@ -22,9 +14,11 @@ fn part1(input: &Vec<&str>, right: isize, down: isize) {
                 if x != 0 || y != 0 {Some(Coord{x,y})} 
                 else {None}
             )
-        ).filter(|(start, dir)| check(&input, *start, *dir))
+        ).filter(|(start, dir)| {
+            "XMAS" == (0..4).filter_map(|i| get_coord(input, *start+*dir*i)).collect::<String>()
+        })
         .count();
-    println!("{result}")
+    println!("{result}");
 }
 
 fn check2(input: &Vec<&str>, coord: Coord) -> bool {
@@ -36,16 +30,12 @@ fn check2(input: &Vec<&str>, coord: Coord) -> bool {
     characters.len() == 4 &&
     characters.iter().filter(|&c| c == &'S').count() == 2 &&
     characters.iter().filter(|&c| c == &'M').count() == 2 && 
-    (
-        characters.get(0) == characters.get(1) || 
-        characters.get(0) == characters.get(3)
-    )
+    characters.get(0) != characters.get(2)
 }
 
 fn part2(input: &Vec<&str>, right: isize, down: isize) {
-    let result = (0..right).cartesian_product(0..down)
-        .map(|(x,y)| Coord{x,y})
-        .filter(|&coord| check2(&input, coord))
+    let result = (0..right).cartesian_product(0..down).map(|(x,y)| Coord{x,y})
+        .filter(|&coord| check2(input, coord))
         .count();
     println!("{result}")
 }
