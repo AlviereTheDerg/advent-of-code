@@ -39,9 +39,7 @@ fn topological_sort(order_rules: &Vec<(isize, isize)>, print: &Vec<isize>) -> Ve
         let n = *free_branches.pop().unwrap();
         result.push(n);
 
-        order_rules = order_rules.iter().filter_map(|&v| 
-                if n != v.0 {Some(v)} else {None}
-            ).collect::<Vec<&(isize, isize)>>();
+        order_rules.retain(|&v| n != v.0);
 
         free_branches.extend(print.iter()
                 .filter(|i| !result.contains(i))
