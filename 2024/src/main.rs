@@ -42,6 +42,14 @@ impl std::ops::Mul<isize> for Coord {
         }
     }
 }
+impl Coord {
+    fn within_bounds(&self, outer_bounds: &Coord) -> bool {
+        self.x >= 0 &&
+        self.x < outer_bounds.x &&
+        self.y >= 0 &&
+        self.y < outer_bounds.y
+    }
+}
 
 struct Graph<NodeType>
 where 

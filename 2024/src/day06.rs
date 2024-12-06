@@ -2,68 +2,96 @@
 use std::{collections::HashSet, convert::identity};
 use crate::Coord;
 
-fn get_guard_next_position(guard_data: (Coord, isize), obstacles: &HashSet<Coord>) -> (Coord, isize) {
-    let offset = match guard_data.1 {
-        0 => Some(Coord{x:0, y:-1}),
-        1 => Some(Coord{x:1, y:0}),
-        2 => Some(Coord{x:0, y:1}),
-        3 => Some(Coord{x:-1, y:0}),
-        _ => None
-    }.unwrap();
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+struct GuardData {
+    pub pos: Coord,
+    pub dir: isize,
+}
+impl GuardData {
+    pub fn get_next_position(&self, obstacles: &HashSet<Coord>, possible_obstacle: Option<Coord>) -> GuardData {
+        let offset = match self.dir {
+            0 => Some(Coord{x:0, y:-1}),
+            1 => Some(Coord{x:1, y:0}),
+            2 => Some(Coord{x:0, y:1}),
+            3 => Some(Coord{x:-1, y:0}),
+            _ => None
+        }.unwrap();
     
-    if !obstacles.contains(&(guard_data.0 + offset)) {
-        (guard_data.0 + offset, guard_data.1)
-    } else {
-        (guard_data.0, (guard_data.1 + 1) % 4)
+        if !obstacles.contains(&(self.pos + offset)) && Some(self.pos + offset) != possible_obstacle {
+            GuardData{pos: self.pos + offset, dir: self.dir}
+        } else {
+            GuardData{pos: self.pos, dir: (self.dir + 1) % 4}
+        }
+    }
+
+    pub fn step(&mut self, obstacles: &HashSet<Coord>, possible_obstacle: Option<Coord>) {
+        let next = self.get_next_position(obstacles, possible_obstacle);
+        self.pos = next.pos;
+        self.dir = next.dir;
     }
 }
 
-fn get_walk_positions(bounds: &Coord, start_position: &Coord, obstacles: &HashSet<Coord>) -> HashSet<Coord> {
-    let mut guard_position = start_position.clone();
+fn get_walk_positions(bounds: &Coord, start_position: &Coord, obstacles: &HashSet<Coord>) -> HashSet<GuardData> {
+    let mut guard = GuardData{pos: *start_position, dir: 0};
+    let mut guard_track = HashSet::<GuardData>::new();
 
-    let mut guard_dir = 0;
-    let mut guard_track = HashSet::<(Coord, isize)>::new();
-
-    while guard_position.x < bounds.x && guard_position.x >= 0 && guard_position.y < bounds.y && guard_position.y >= 0 {
-        guard_track.insert((guard_position, guard_dir));
-        let hold = get_guard_next_position((guard_position, guard_dir), obstacles);
-        guard_position = hold.0;
-        guard_dir = hold.1;
+    while guard.pos.within_bounds(bounds) {
+        guard_track.insert(guard);
+        guard.step(obstacles, None);
     }
 
-    guard_track.into_iter().map(|(pos, _)| pos).collect()
+    guard_track
 }
 
 fn part1(bounds: &Coord, guard_position: &Coord, obstacles: &HashSet<Coord>) {
-    let result = get_walk_positions(bounds, guard_position, obstacles).len();
+    let result = get_walk_positions(bounds, guard_position, obstacles)
+        .into_iter()
+        .map(|guard| guard.pos)
+        .collect::<HashSet<Coord>>()
+        .len();
     println!("{result}")
 }
 
-fn loops(bounds: &Coord, start_position: &Coord, obstacles: &HashSet<Coord>) -> bool {
-    let mut guard_position = start_position.clone();
-    let mut guard_dir = 0;
-    let mut guard_track = HashSet::<(Coord, isize)>::new();
+fn loops(bounds: &Coord, start_position: &GuardData, obstacles: &HashSet<Coord>, added_obstacle: Coord, previous_steps: &HashSet<GuardData>) -> bool {
+    let mut guard = start_position.clone();
+    let mut guard_track = previous_steps.clone();
+    if !added_obstacle.within_bounds(bounds) {return false;}
 
-    while guard_position.x < bounds.x && guard_position.x >= 0 && guard_position.y < bounds.y && guard_position.y >= 0 {
-        if guard_track.contains(&(guard_position, guard_dir)) {return true;}
-        guard_track.insert((guard_position, guard_dir));
-        let hold = get_guard_next_position((guard_position, guard_dir), obstacles);
-        guard_position = hold.0;
-        guard_dir = hold.1;
+    while guard.pos.within_bounds(bounds) {
+        if guard_track.contains(&guard) {return true;}
+        guard_track.insert(guard);
+        guard.step(&obstacles, Some(added_obstacle));
     }
     false
 }
 
 fn part2(bounds: &Coord, guard_position: &Coord, obstacles: &HashSet<Coord>) {
-    let mut result = 0;
-    for possible_obstacle in get_walk_positions(bounds, guard_position, obstacles) {
-        if guard_position == &possible_obstacle {continue;}
-        let mut this_obstacles = obstacles.clone();
-        this_obstacles.insert(possible_obstacle);
+    let mut guard = GuardData{pos:*guard_position, dir:0};
+    let mut visited = HashSet::new();
+    let mut added_obstacles = HashSet::new();
+    let mut previous_steps = HashSet::new();
 
-        if loops(bounds, guard_position, &this_obstacles) {result += 1;}
+    while guard.pos.within_bounds(bounds) {
+        visited.insert(guard.pos);
+
+        let next = guard.get_next_position(obstacles, None).pos;
+
+        // paradox avoidance, don't put an obstacle where we've already been
+        // also redundancy checks: don't try and place an obstacle if there's already one there OR we've already tried putting one there
+        if visited.contains(&next) || obstacles.contains(&next) || added_obstacles.contains(&next) { 
+            guard.step(obstacles, None); 
+            continue;
+        }
+
+        if loops(bounds, &guard, obstacles, next, &previous_steps) {
+            added_obstacles.insert(next);
+        }
+
+        previous_steps.insert(guard);
+        guard.step(obstacles, None);
     }
-    println!("{result}");
+
+    println!("{}", added_obstacles.len());
 }
 
 pub fn main() {
@@ -79,7 +107,12 @@ pub fn main() {
     let bounds: Coord = Coord{x:input.split_whitespace().next().unwrap().len() as isize,y:input.split_whitespace().count() as isize};
     let guard_position = filtered_data.iter().filter_map(|(pos, char)| if char == &'^' {Some(pos)} else {None}).next().unwrap().clone();
     let obstacles: HashSet<Coord> = filtered_data.into_iter().filter_map(|(pos, char)| if char == '#' {Some(pos)} else {None}).collect();
-
+    
+    let timer = std::time::Instant::now();
     part1(&bounds, &guard_position, &obstacles);
+    println!("{}", timer.elapsed().as_millis());
+
+    let timer = std::time::Instant::now();
     part2(&bounds, &guard_position, &obstacles);
+    println!("{}", timer.elapsed().as_millis());
 }
