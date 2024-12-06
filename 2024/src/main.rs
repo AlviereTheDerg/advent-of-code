@@ -1,13 +1,14 @@
 
-use std::{env, fs};
+use std::{collections::{HashMap, HashSet}, env, fs, hash::Hash};
 
 mod day01;
 mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct Coord {
     pub x: isize,
     pub y: isize,
@@ -42,6 +43,40 @@ impl std::ops::Mul<isize> for Coord {
     }
 }
 
+struct Graph<NodeType>
+where 
+    NodeType: Hash + Eq + Clone,
+{
+    data: HashMap<NodeType, HashSet<NodeType>>,
+}
+impl<NodeType> Graph<NodeType>
+where 
+    NodeType: Hash + Eq + Clone,
+{
+    pub fn add_node(&mut self, node: NodeType) {
+        self.data.entry(node).or_insert(HashSet::new());
+    }
+
+    pub fn has_node(&self, node: &NodeType) -> bool {
+        self.data.contains_key(node)
+    }
+
+    pub fn add_edge(&mut self, start: NodeType, end: NodeType) {
+        self.add_node(start.clone()); self.add_node(end.clone());
+        self.data.get_mut(&start).unwrap().insert(end);
+    }
+
+    pub fn has_edge(&self, start: &NodeType, end: &NodeType) -> bool {
+        self.has_node(start) &&
+        self.has_node(end) &&
+        self.data.get(start).unwrap().contains(end)
+    }
+
+    pub fn remove_edge(&mut self, start: &NodeType, end: &NodeType) {
+        self.data.get_mut(start).unwrap().remove(end);
+    }
+}
+
 fn grab_input(input_name: &str) -> String {
     fs::read_to_string(format!("./inputs/{input_name}.txt")).unwrap()
 }
@@ -58,6 +93,7 @@ fn main() {
         3 => { day03::main(); },
         4 => { day04::main(); },
         5 => { day05::main(); },
+        6 => { day06::main(); },
         _ => { println!("Day not recognized!"); },
     }
 }
