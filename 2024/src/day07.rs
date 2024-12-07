@@ -3,13 +3,16 @@ use std::collections::HashSet;
 use std::ops::{Add, Mul};
 
 fn valid_sequence(goal: isize, operands: &Vec<isize>, operators: &Vec<&dyn Fn(isize, isize) -> isize>) -> bool {
-    let mut found_numbers = HashSet::new();
-    for &operand in operands.iter() {
+    let mut operands = operands.iter();
+    let mut found_numbers = HashSet::new(); found_numbers.insert(*operands.next().unwrap());
+    for &operand in operands {
         let mut next_found_numbers = HashSet::new();
-        if found_numbers.is_empty() {found_numbers.insert(operand); continue;}
 
         for number in found_numbers {
             for operator in operators.iter() {
+                // optimization! numbers can only increase, if it's overshot then skip it, do not pass go, do not collect $100
+                if operator(number, operand) > goal {continue;}
+
                 next_found_numbers.insert(operator(number, operand));
             }
         }
@@ -32,7 +35,7 @@ fn part1(lines: &Vec<(isize, Vec<isize>)>) {
 }
 
 fn concatenate(left: isize, right:isize) -> isize {
-    (left.to_string() + &right.to_string()).parse::<isize>().unwrap()
+    left * 10isize.pow(right.ilog10() + 1) + right
 }
 
 fn part2(lines: &Vec<(isize, Vec<isize>)>) {
@@ -52,6 +55,11 @@ pub fn main() {
         )
     }).collect::<Vec<_>>();
 
+    let timer = std::time::Instant::now();
     part1(&input);
+    println!("{}", timer.elapsed().as_millis());
+
+    let timer = std::time::Instant::now();
     part2(&input);
+    println!("{}", timer.elapsed().as_millis());
 }
