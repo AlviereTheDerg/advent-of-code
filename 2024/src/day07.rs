@@ -6,17 +6,12 @@ fn valid_sequence(goal: isize, operands: &Vec<isize>, operators: &Vec<&dyn Fn(is
     let mut operands = operands.iter();
     let mut found_numbers = HashSet::new(); found_numbers.insert(*operands.next().unwrap());
     for &operand in operands {
-        let mut next_found_numbers = HashSet::new();
-
-        for number in found_numbers {
-            for operator in operators.iter() {
-                // optimization! numbers can only increase, if it's overshot then skip it, do not pass go, do not collect $100
-                if operator(number, operand) > goal {continue;}
-
-                next_found_numbers.insert(operator(number, operand));
-            }
-        }
-        found_numbers = next_found_numbers;
+        found_numbers = found_numbers.iter().map(|number| {
+                operators.iter().map(|operator| operator(*number, operand))
+            })
+            .flat_map(std::convert::identity)
+            .filter(|number| number <= &goal)
+            .collect();
     }
     found_numbers.contains(&goal)
 }
