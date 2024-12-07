@@ -2,23 +2,32 @@
 use std::collections::HashSet;
 use std::ops::{Add, Mul};
 
-fn part1(lines: &Vec<(isize, Vec<isize>)>) {
-    let mut result = 0;
-    for (goal, operands) in lines {
-        let mut found_numbers = HashSet::new();
-        for &operand in operands.iter() {
-            let mut next_found_numbers = HashSet::new();
-            if found_numbers.is_empty() {found_numbers.insert(operand); continue;}
+fn valid_sequence(goal: isize, operands: &Vec<isize>, operators: &Vec<&dyn Fn(isize, isize) -> isize>) -> bool {
+    let mut found_numbers = HashSet::new();
+    for &operand in operands.iter() {
+        let mut next_found_numbers = HashSet::new();
+        if found_numbers.is_empty() {found_numbers.insert(operand); continue;}
 
-            for number in found_numbers {
-                for operator in vec![Add::add, Mul::mul] {
-                    next_found_numbers.insert(operator(number, operand));
-                }
+        for number in found_numbers {
+            for operator in operators.iter() {
+                next_found_numbers.insert(operator(number, operand));
             }
-            found_numbers = next_found_numbers;
         }
-        if found_numbers.contains(&goal) {result += goal;}
+        found_numbers = next_found_numbers;
     }
+    found_numbers.contains(&goal)
+}
+
+fn process_valid_sequences(lines: &Vec<(isize, Vec<isize>)>, operators: Vec<&dyn Fn(isize, isize) -> isize>) -> isize {
+    lines.iter().filter_map(|(goal, operands)| {
+        if valid_sequence(*goal, operands, &operators) {
+            Some(goal)
+        } else {None}
+    }).sum()
+}
+
+fn part1(lines: &Vec<(isize, Vec<isize>)>) {
+    let result = process_valid_sequences(lines, vec![&Add::add, &Mul::mul]);
     println!("{result}");
 }
 
@@ -27,22 +36,7 @@ fn concatenate(left: isize, right:isize) -> isize {
 }
 
 fn part2(lines: &Vec<(isize, Vec<isize>)>) {
-    let mut result = 0;
-    for (goal, operands) in lines {
-        let mut found_numbers = HashSet::new();
-        for &operand in operands.iter() {
-            let mut next_found_numbers = HashSet::new();
-            if found_numbers.is_empty() {found_numbers.insert(operand); continue;}
-
-            for number in found_numbers {
-                for operator in vec![Add::add, Mul::mul, concatenate] {
-                    next_found_numbers.insert(operator(number, operand));
-                }
-            }
-            found_numbers = next_found_numbers;
-        }
-        if found_numbers.contains(&goal) {result += goal;}
-    }
+    let result = process_valid_sequences(lines, vec![&Add::add, &Mul::mul, &concatenate]);
     println!("{result}");
 }
 
