@@ -28,8 +28,7 @@ fn part1(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
         input, 
         bounds, 
         &|antennA, antennB| {
-            let diff = antennA - antennB;
-            vec![antennA + diff, antennB - diff]
+            vec![antennA * 2 - antennB] // antennA + (antennA - antennB)
         }
     );
     println!("{result}");
@@ -45,11 +44,6 @@ fn part2(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
             let mut i = 0;
             while (antennA + diff * i).within_bounds(bounds) {
                 output.push(antennA + diff * i);
-                i += 1;
-            }
-            i = 0;
-            while (antennB - diff * i).within_bounds(bounds) {
-                output.push(antennB - diff * i);
                 i += 1;
             }
             output
