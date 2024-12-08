@@ -23,6 +23,30 @@ fn part1(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
     println!("{}", anti_nodes.len())
 }
 
+fn part2(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
+    let mut anti_nodes = HashSet::<Coord>::new();
+
+    for (_, antennae) in input.iter() {
+        for &antennA in antennae.iter() {
+            for &antennB in antennae.iter() {
+                if antennA == antennB {continue;}
+                let diff = antennA - antennB;
+                let mut i = 0;
+                while (antennA + diff * i).within_bounds(bounds) {
+                    anti_nodes.insert(antennA + diff * i);
+                    i += 1;
+                }
+                i = 0;
+                while (antennB - diff * i).within_bounds(bounds) {
+                    anti_nodes.insert(antennB - diff * i);
+                    i += 1;
+                }
+            }
+        }
+    }
+    println!("{}", anti_nodes.len())
+}
+
 pub fn main() {
     let input = crate::grab_input("day08");
 
@@ -51,4 +75,5 @@ pub fn main() {
         ).collect::<HashMap<char, Vec<Coord>>>();
 
     part1(&mapped_data, &bounds);
+    part2(&mapped_data, &bounds);
 }
