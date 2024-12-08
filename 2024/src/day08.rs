@@ -2,49 +2,60 @@
 use std::{collections::{HashMap, HashSet}, convert::identity};
 use crate::Coord;
 
-fn part1(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
-    let mut anti_nodes = HashSet::<Coord>::new();
-
-    for (_, antennae) in input.iter() {
+fn get_antinodes_count(
+    antenna_clusters: &HashMap<char, Vec<Coord>>, 
+    bounds: &Coord, 
+    anti_node_generator: &dyn Fn(Coord, Coord) -> Vec<Coord>)
+    -> usize
+{
+    let mut anti_nodes: HashSet<Coord> = HashSet::new();
+    for (_, antennae) in antenna_clusters.iter() {
         for &antennA in antennae.iter() {
             for &antennB in antennae.iter() {
                 if antennA == antennB {continue;}
-                let diff = antennA - antennB;
-
-                if (antennA + diff).within_bounds(bounds) {
-                    anti_nodes.insert(antennA + diff);
-                }
-                if (antennB + diff * -1).within_bounds(bounds) {
-                    anti_nodes.insert(antennB + diff * -1);
-                }
+                anti_nodes.extend(
+                    anti_node_generator(antennA, antennB).iter()
+                        .filter(|coord| coord.within_bounds(bounds))
+                );
             }
         }
     }
-    println!("{}", anti_nodes.len())
+    anti_nodes.len()
+}
+
+fn part1(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
+    let result = get_antinodes_count(
+        input, 
+        bounds, 
+        &|antennA, antennB| {
+            let diff = antennA - antennB;
+            vec![antennA + diff, antennB - diff]
+        }
+    );
+    println!("{result}");
 }
 
 fn part2(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
-    let mut anti_nodes = HashSet::<Coord>::new();
-
-    for (_, antennae) in input.iter() {
-        for &antennA in antennae.iter() {
-            for &antennB in antennae.iter() {
-                if antennA == antennB {continue;}
-                let diff = antennA - antennB;
-                let mut i = 0;
-                while (antennA + diff * i).within_bounds(bounds) {
-                    anti_nodes.insert(antennA + diff * i);
-                    i += 1;
-                }
-                i = 0;
-                while (antennB - diff * i).within_bounds(bounds) {
-                    anti_nodes.insert(antennB - diff * i);
-                    i += 1;
-                }
+    let result = get_antinodes_count(
+        input, 
+        bounds, 
+        &|antennA, antennB| {
+            let mut output = Vec::new();
+            let diff = antennA - antennB;
+            let mut i = 0;
+            while (antennA + diff * i).within_bounds(bounds) {
+                output.push(antennA + diff * i);
+                i += 1;
             }
+            i = 0;
+            while (antennB - diff * i).within_bounds(bounds) {
+                output.push(antennB - diff * i);
+                i += 1;
+            }
+            output
         }
-    }
-    println!("{}", anti_nodes.len())
+    );
+    println!("{result}");
 }
 
 pub fn main() {
