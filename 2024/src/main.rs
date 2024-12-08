@@ -8,6 +8,7 @@ mod day04;
 mod day05;
 mod day06;
 mod day07;
+mod day08;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct Coord {
@@ -104,6 +105,7 @@ fn main() {
         5 => { day05::main(); },
         6 => { day06::main(); },
         7 => { day07::main(); },
+        8 => { day08::main(); },
         _ => { println!("Day not recognized!"); },
     }
 }
