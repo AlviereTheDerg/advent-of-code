@@ -1,7 +1,8 @@
 
 use std::{collections::{HashMap, HashSet}, convert::identity};
-use crate::Coord;
+use crate::{Coord, New};
 
+#[allow(non_snake_case)]
 fn get_antinodes_count(
     antenna_clusters: &HashMap<char, Vec<Coord>>, 
     bounds: &Coord, 
@@ -23,6 +24,7 @@ fn get_antinodes_count(
     anti_nodes.len()
 }
 
+#[allow(non_snake_case)]
 fn part1(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
     let result = get_antinodes_count(
         input, 
@@ -34,6 +36,7 @@ fn part1(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
     println!("{result}");
 }
 
+#[allow(non_snake_case)]
 fn part2(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
     let result = get_antinodes_count(
         input, 
@@ -55,13 +58,16 @@ fn part2(input: &HashMap<char, Vec<Coord>>, bounds: &Coord) {
 pub fn main() {
     let input = crate::grab_input("day08");
 
-    let bounds = Coord{x:input.split_whitespace().next().unwrap().len() as isize, y:input.split_whitespace().filter(|s| !s.is_empty()).count() as isize};
+    let bounds = Coord::new(
+        input.split_whitespace().next().unwrap().len(), 
+        input.split_whitespace().filter(|s| !s.is_empty()).count()
+    );
     
     let filtered_data = input.split_whitespace().enumerate()
         .map(|(row, line)| line.chars().enumerate()
             .filter_map(move |(column, char)|
                 if char != '.' {
-                    Some((char, Coord{x:column as isize, y:row as isize}))
+                    Some((char, Coord::new(column, row)))
                 } else {None}
             )
         ).flat_map(identity).collect::<Vec<(char, Coord)>>();

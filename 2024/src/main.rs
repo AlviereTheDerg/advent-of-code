@@ -1,5 +1,5 @@
 
-use std::{collections::{HashMap, HashSet}, env, fs, hash::Hash};
+use std::{env, fs, hash::Hash};
 
 mod day01;
 mod day02;
@@ -52,7 +52,31 @@ impl Coord {
         self.y < outer_bounds.y
     }
 }
+trait New<X,Y> {
+    fn new(x:X, y:Y) -> Self;
+}
+impl New<isize, isize> for Coord {
+    fn new(x: isize, y: isize) -> Coord {
+        Coord{x, y}
+    }
+}
+impl New<isize, usize> for Coord {
+    fn new(x: isize, y: usize) -> Coord {
+        Coord{x, y:y as isize}
+    }
+}
+impl New<usize, isize> for Coord {
+    fn new(x: usize, y: isize) -> Coord {
+        Coord{x:x as isize, y}
+    }
+}
+impl New<usize, usize> for Coord {
+    fn new(x: usize, y: usize) -> Coord {
+        Coord{x:x as isize, y:y as isize}
+    }
+}
 
+/*
 struct Graph<NodeType>
 where 
     NodeType: Hash + Eq + Clone,
@@ -85,7 +109,7 @@ where
     pub fn remove_edge(&mut self, start: &NodeType, end: &NodeType) {
         self.data.get_mut(start).unwrap().remove(end);
     }
-}
+} */
 
 fn grab_input(input_name: &str) -> String {
     fs::read_to_string(format!("./inputs/{input_name}.txt")).unwrap()

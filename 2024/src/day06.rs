@@ -1,6 +1,6 @@
 
 use std::{collections::HashSet, convert::identity};
-use crate::Coord;
+use crate::{Coord, New};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct GuardData {
@@ -100,7 +100,7 @@ pub fn main() {
     let filtered_data = input.split_whitespace().enumerate()
         .map(|(row, line)| line.chars().enumerate()
             .map(move |(column, char)|
-                (Coord{x:column as isize, y:row as isize}, char)
+                (Coord::new(column, row), char)
             )
         ).flat_map(identity).collect::<Vec<(Coord, char)>>();
     
