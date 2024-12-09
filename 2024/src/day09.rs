@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 
 fn part1(input: &Vec<u32>) {
     let mut forward_token_iter = input.iter()
@@ -19,17 +21,9 @@ fn part1(input: &Vec<u32>) {
         })
         .flat_map(std::convert::identity);
 
-    println!("{input:?}");
-    let mut total_block_length = 0;
-    for (index, item) in input.iter().enumerate() {
-        if index % 2 == 0 {total_block_length += item}
-    }
-    println!("{total_block_length}");
-    
-    //let total_block_length = input.iter().enumerate()
-    //    .filter_map(|(index, &value)| if index & 2 == 0 {Some(value)} else {None})
-    //    .sum::<u32>();
-    //println!("{total_block_length}");
+    let total_block_length = input.iter().enumerate()
+        .filter_map(|(index, &item)| if index % 2 == 0 {Some(item)} else {None})
+        .sum::<u32>();
 
     let mut switch = false;
     let mut remaining_until_switch: u32 = 0;
@@ -48,9 +42,67 @@ fn part1(input: &Vec<u32>) {
         index += 1;
         file_blocks.push(block_id);
     }
-    //println!("{}", file_blocks.iter().map(|v| v.to_string()).collect::<String>());
 
     let checksum = file_blocks.iter().enumerate().map(|(index, value)| index * value).sum::<usize>();
+    println!("{checksum}");
+}
+
+fn part2(input: &Vec<u32>) {
+    // block length, starting index, ID (None if empty)
+    let mut blocks = Vec::new();
+    let mut total_index = 0usize;
+    for (index, &length) in input.iter().enumerate() {
+        blocks.push((
+            length as usize,
+            total_index,
+            if index % 2 == 0 {Some(index / 2)} else {None}
+        ));
+        total_index += length as usize;
+    }
+
+    // block length, block index
+    let mut empty_blocks = blocks.iter()
+        .filter_map(|(length, index, id)| {
+            if id == &None {
+                Some((*length, *index))
+            } else {None}
+        })
+        .collect::<HashSet<_>>();
+    
+    // block length, block index, block ID
+    let full_blocks = blocks.iter()
+        .filter_map(|(length, index, id)| {
+            if let Some(id) = id {
+                Some((*length, *index, *id))
+            } else {None}
+        })
+        .collect::<Vec<_>>();
+    
+    let mut checksum = 0; 
+    for (length, index, id) in full_blocks.iter().rev() {
+        let selection = empty_blocks.iter()
+            .filter(|(empty_length, empty_index)| { // get valid gaps
+                empty_length >= length &&
+                empty_index <= index
+            })
+            .reduce(|first, second| { // get first valid gap
+                if first.1 < second.1 {first} else {second}
+            });
+
+        let placement_index = if let Some(&selection) = selection { // space to fill
+            empty_blocks.remove(&selection);
+            
+            // if the entire space isn't filled, re-add a smaller empty space after the filled
+            if selection.0 > *length { 
+                empty_blocks.insert((selection.0 - length, selection.1 + length));
+            }
+
+            selection.1
+        } else { // otherwise keep it in its current position
+            *index
+        };
+        checksum += id * length * (2 * placement_index + length - 1) / 2
+    }
     println!("{checksum}");
 }
 
@@ -60,4 +112,5 @@ pub fn main() {
         .map(|c| c.to_digit(10).unwrap())
         .collect::<Vec<u32>>();
     part1(&input);
+    part2(&input);
 }
