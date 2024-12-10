@@ -49,10 +49,13 @@ fn part2(blocks: &Vec<(usize, usize, Option<usize>)>) {
             } else {None}
         })
     {
+        empty_blocks.retain(|(_, empty_index)| {
+            *empty_index <= index
+        });
+
         let selection = empty_blocks.iter()
-            .filter(|(empty_length, empty_index)| { // get valid gaps
-                *empty_length >= length &&
-                *empty_index <= index
+            .filter(|(empty_length, _)| { // get valid gaps
+                *empty_length >= length
             })
             .reduce(|first, second| { // get first valid gap
                 if first.1 < second.1 {first} else {second}
@@ -93,6 +96,11 @@ pub fn main() {
         total_index += length as usize;
     }
 
+    let timer = std::time::Instant::now();
     part1(&blocks);
+    println!("{}", timer.elapsed().as_millis());
+
+    let timer = std::time::Instant::now();
     part2(&blocks);
+    println!("{}", timer.elapsed().as_millis());
 }
