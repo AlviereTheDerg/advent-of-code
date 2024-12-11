@@ -11,26 +11,14 @@ fn blink_transform(stone: isize) -> Vec<isize> {
     }
 }
 
-fn part1(stones: &Vec<isize>) {
-    let mut stones = stones.clone();
-    for _ in 0..25 {
-        stones = stones.into_iter()
-            .map(|stone| blink_transform(stone).into_iter())
-            .flat_map(std::convert::identity)
-            .collect()
-    }
-    let result = stones.len();
-    println!("{result}");
-}
-
-fn part2(stones: &Vec<isize>) {
+fn stones_after_n_blinks(stones: &Vec<isize>, blinks: usize) -> usize {
     let mut stone_counts = HashMap::<isize, usize>::new();
     for stone in stones.iter() {
         stone_counts.entry(*stone)
             .and_modify(|v| *v += 1)
             .or_insert(1);
     }
-    for _ in 0..75 {
+    for _ in 0..blinks {
         let mut next_stones = HashMap::<isize, usize>::new();
 
         for (stone, count) in stone_counts.iter() {
@@ -43,7 +31,16 @@ fn part2(stones: &Vec<isize>) {
 
         stone_counts = next_stones;
     }
-    let result: usize = stone_counts.values().sum();
+    stone_counts.values().sum()
+}
+
+fn part1(stones: &Vec<isize>) {
+    let result = stones_after_n_blinks(stones, 25);
+    println!("{result}");
+}
+
+fn part2(stones: &Vec<isize>) {
+    let result = stones_after_n_blinks(stones, 75);
     println!("{result}");
 }
 
