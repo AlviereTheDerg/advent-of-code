@@ -21,32 +21,65 @@ fn group(map: &HashMap<Coord, char>, nucleation: Coord) -> HashSet<Coord> {
     visited
 }
 
-fn get_fencing(patch: &HashSet<Coord>) -> usize {
-    let neighbours = vec![Coord{x:1,y:0}, Coord{x:-1,y:0}, Coord{x:0,y:1}, Coord{x:0,y:-1}];
-    let mut result = 0;
+fn get_fencing(patch: &HashSet<Coord>) -> Vec<(Coord, usize)> {
+    let neighbours = vec![Coord{x:1,y:0}, Coord{x:0,y:1}, Coord{x:-1,y:0}, Coord{x:0,y:-1}];
+    let mut result = Vec::<(Coord, usize)>::new();
     for here in patch.iter() {
-        for neighbour in neighbours.iter().map(|n| *here + *n) {
-            if !patch.contains(&neighbour) {result += 1}
+        for (dir, neighbour) in neighbours.iter().map(|n| *here + *n).enumerate() {
+            if !patch.contains(&neighbour) {result.push((neighbour, dir))}
         }
     }
     result
 }
 
-fn part1(map: &HashMap<Coord, char>, bounds: &Coord) {
-    let mut groups = Vec::<HashSet<Coord>>::new();
-    let mut visited = HashSet::<Coord>::new();
+fn part1(groups: &Vec<HashSet<Coord>>) {
+    let result: usize = groups.iter().map(|s| s.len() * get_fencing(s).len()).sum();
+    println!("{result}");
+}
 
-    for y in 0..bounds.y {
-        for x in 0..bounds.x {
-            if !visited.contains(&Coord::new(x,y)) {
-                let new_group = group(map, Coord::new(x,y));
-                visited.extend(new_group.iter());
-                groups.push(new_group);
+fn get_fencelines(patch: &HashSet<Coord>) -> usize {
+    let fence_units = get_fencing(patch);
+    let neighbours = vec![Coord{x:1,y:0}, Coord{x:0,y:1}, Coord{x:-1,y:0}, Coord{x:0,y:-1}];
+
+    let mut lines = Vec::<HashSet<Coord>>::new();
+    for direction in 0..4usize {
+        let mut fence_units = fence_units.iter()
+            .filter_map(|(coord, dir)| 
+                if direction == *dir {Some(*coord)} 
+                else {None}
+            ).collect::<HashSet<Coord>>();
+        
+        // if 1,0 or -1,0 then dir%2 == 0, if 0,1 or 0,-1 then dir%2 == 1
+        let neighbours = neighbours.iter().enumerate()
+            .filter_map(|(dir, coord)| 
+                if direction % 2 != dir % 2 {Some(*coord)} else {None})
+            .collect::<Vec<Coord>>();
+
+        while !fence_units.is_empty() {
+            let start = *fence_units.iter().next().unwrap();
+            fence_units.remove(&start);
+
+            let mut visited = HashSet::<Coord>::new();
+            let mut travel_stack = vec![start];
+            while !travel_stack.is_empty() {
+                let here = travel_stack.pop().unwrap();
+                visited.insert(here);
+                for neighbour in neighbours.iter().map(|n| here + *n) {
+                    if fence_units.contains(&neighbour) {
+                        fence_units.remove(&neighbour);
+                        travel_stack.push(neighbour);
+                    }
+                }
             }
+            lines.push(visited);
         }
     }
 
-    let result: usize = groups.iter().map(|s| s.len() * get_fencing(s)).sum();
+    lines.len()
+}
+
+fn part2(groups: &Vec<HashSet<Coord>>) {
+    let result: usize = groups.iter().map(|s| s.len() * get_fencelines(s)).sum();
     println!("{result}");
 }
 
@@ -69,5 +102,20 @@ pub fn main() {
         .flat_map(std::convert::identity)
         .collect();
 
-    part1(&map, &bounds);
+    
+    let mut groups = Vec::<HashSet<Coord>>::new();
+    let mut visited = HashSet::<Coord>::new();
+
+    for y in 0..bounds.y {
+        for x in 0..bounds.x {
+            if !visited.contains(&Coord::new(x,y)) {
+                let new_group = group(&map, Coord::new(x,y));
+                visited.extend(new_group.iter());
+                groups.push(new_group);
+            }
+        }
+    }
+
+    part1(&groups);
+    part2(&groups);
 }
