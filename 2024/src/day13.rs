@@ -1,33 +1,41 @@
 
 use regex::Regex;
 
+fn solve_equations(values: &Vec<isize>) -> Option<(isize, isize)> {
+    // ax*A + bx*B = px
+    // ay*A + by*B = py
+    // ay*ax*A + ay*bx*B = ay*px
+    // ax*ay*A + ax*by*B = ax*py
+    // ay*bx*B - ax*by*B = ay*px - ax*py
+    // B * (ay*bx - ax*by) = ay*px - ax*py
+    // B = (ay*px - ax*py) / (ay*bx - ax*by)
+    // by*ax*A + by*bx*B = by*px
+    // bx*ay*A + bx*by*B = bx*py
+    // by*ax*A - bx*ay*A = by*px - bx*py
+    // A * (by*ax - bx*ay) = by*px - bx*py
+    // A = (by*px - bx*py) / (by*ax - bx*ay)
+    let ax = *values.get(0).unwrap();
+    let ay = *values.get(1).unwrap();
+    let bx = *values.get(2).unwrap();
+    let by = *values.get(3).unwrap();
+    let px = *values.get(4).unwrap();
+    let py = *values.get(5).unwrap();
+    if (ay*px - ax*py) % (ay*bx - ax*by) != 0 || (by*px - bx*py) % (by*ax - bx*ay) != 0 {
+        None
+    } else {
+        Some((
+            ((by*px - bx*py) / (by*ax - bx*ay)).abs(),
+            ((ay*px - ax*py) / (ay*bx - ax*by)).abs()
+        ))
+    }
+}
+
 fn part1(data_blocks: &Vec<Vec<isize>>) {
     let mut result = 0;
     for block in data_blocks {
-        // ax*A + bx*B = px
-        // ay*A + by*B = py
-        // ay*ax*A + ay*bx*B = ay*px
-        // ax*ay*A + ax*by*B = ax*py
-        // ay*bx*B - ax*by*B = ay*px - ax*py
-        // B * (ay*bx - ax*by) = ay*px - ax*py
-        // B = (ay*px - ax*py) / (ay*bx - ax*by)
-        // by*ax*A + by*bx*B = by*px
-        // bx*ay*A + bx*by*B = bx*py
-        // by*ax*A - bx*ay*A = by*px - bx*py
-        // A * (by*ax - bx*ay) = by*px - bx*py
-        // A = (by*px - bx*py) / (by*ax - bx*ay)
-        let ax = *block.get(0).unwrap();
-        let ay = *block.get(1).unwrap();
-        let bx = *block.get(2).unwrap();
-        let by = *block.get(3).unwrap();
-        let px = *block.get(4).unwrap();
-        let py = *block.get(5).unwrap();
-        if (ay*px - ax*py) % (ay*bx - ax*by) != 0 || (by*px - bx*py) % (by*ax - bx*ay) != 0 {
-            continue;
+        if let Some((a,b)) = solve_equations(block) {
+            result += 3*a + b;
         }
-        let a = ((by*px - bx*py) / (by*ax - bx*ay)).abs();
-        let b = ((ay*px - ax*py) / (ay*bx - ax*by)).abs();
-        result += 3*a + b;
     }
     println!("{result}");
 }
@@ -35,30 +43,18 @@ fn part1(data_blocks: &Vec<Vec<isize>>) {
 fn part2(data_blocks: &Vec<Vec<isize>>) {
     let mut result = 0;
     for block in data_blocks {
-        // ax*A + bx*B = px
-        // ay*A + by*B = py
-        // ay*ax*A + ay*bx*B = ay*px
-        // ax*ay*A + ax*by*B = ax*py
-        // ay*bx*B - ax*by*B = ay*px - ax*py
-        // B * (ay*bx - ax*by) = ay*px - ax*py
-        // B = (ay*px - ax*py) / (ay*bx - ax*by)
-        // by*ax*A + by*bx*B = by*px
-        // bx*ay*A + bx*by*B = bx*py
-        // by*ax*A - bx*ay*A = by*px - bx*py
-        // A * (by*ax - bx*ay) = by*px - bx*py
-        // A = (by*px - bx*py) / (by*ax - bx*ay)
-        let ax = *block.get(0).unwrap();
-        let ay = *block.get(1).unwrap();
-        let bx = *block.get(2).unwrap();
-        let by = *block.get(3).unwrap();
-        let px = *block.get(4).unwrap() + 10000000000000;
-        let py = *block.get(5).unwrap() + 10000000000000;
-        if (ay*px - ax*py) % (ay*bx - ax*by) != 0 || (by*px - bx*py) % (by*ax - bx*ay) != 0 {
-            continue;
+        let block: Vec<isize> = block.iter()
+            .enumerate()
+            .map(|(index, v)| 
+                if index >= 4 {
+                    *v + 10000000000000
+                } else {
+                    *v
+                }
+            ).collect();
+        if let Some((a,b)) = solve_equations(&block) {
+            result += 3*a + b;
         }
-        let a = ((by*px - bx*py) / (by*ax - bx*ay)).abs();
-        let b = ((ay*px - ax*py) / (ay*bx - ax*by)).abs();
-        result += 3*a + b;
     }
     println!("{result}");
 }
