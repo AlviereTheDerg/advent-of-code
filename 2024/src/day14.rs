@@ -1,4 +1,5 @@
 
+use std::collections::HashSet;
 use crate::{Coord, New};
 use regex::Regex;
 
@@ -15,8 +16,6 @@ fn part1(input: &Vec<(Coord, Coord)>, bounds: &Coord) {
         .map(|guard| position_after_n_seconds(guard, bounds, 100))
         .collect::<Vec<Coord>>();
 
-    println!("{robots:?}");
-
     let half_bounds = Coord::new(bounds.x / 2, bounds.y / 2);
     let x_shift = Coord::new(half_bounds.x + 1, 0isize);
     let y_shift = Coord::new(0isize, half_bounds.y + 1);
@@ -25,6 +24,22 @@ fn part1(input: &Vec<(Coord, Coord)>, bounds: &Coord) {
     let lower_left = robots.iter().map(|c| *c - y_shift).filter(|c| c.within_bounds(&half_bounds)).count();
     let lower_right = robots.iter().map(|c| (*c - x_shift) - y_shift).filter(|c| c.within_bounds(&half_bounds)).count();
     let result = upper_left * upper_right * lower_left * lower_right;
+    println!("{result}");
+}
+
+fn part2(input: &Vec<(Coord, Coord)>, bounds: &Coord) {
+    // what does it mean 'make an image of a christmas tree' ?
+    let mut result = 0;
+
+    // no pileup on the same spot?
+    while input.len() != input.iter()
+        .map(|guard| position_after_n_seconds(guard, bounds, result))
+        .collect::<HashSet<Coord>>()
+        .len() 
+    {
+        result += 1;
+    }
+    // I can't believe that worked
     println!("{result}");
 }
 
@@ -46,4 +61,5 @@ pub fn main() {
     }
 
     part1(&robots, &bounds);
+    part2(&robots, &bounds);
 }
