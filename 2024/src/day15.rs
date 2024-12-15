@@ -80,7 +80,9 @@ impl StorageMap {
             while !hold.is_empty() {
                 let moving = hold.iter()
                     .filter_map(|&coord|
-                        if !self.data.contains_key(&(coord + direction)) {Some(coord)} else {None}
+                        if !self.data.contains_key(&(coord + direction)) {
+                            Some(coord)
+                        } else {None}
                     )
                     .collect::<HashSet<Coord>>();
                 for mover in moving.iter() {
@@ -93,17 +95,15 @@ impl StorageMap {
         }
     }
 
-    pub fn enwiden(self) -> Self {
-        let robot = Coord::new(self.robot.x * 2, self.robot.y);
-
-        let bounds = Coord::new(self.bounds.x * 2, self.bounds.y);
-        
-        let data =
-            self.data.into_iter()
-                .map(|(coord, char_d)| {
-                    let base = Coord::new(2 * coord.x, coord.y);
-                    match char_d {
-                        '#' => vec![(base, char_d), (base + Coord::new(1isize, 0isize), char_d)].into_iter(),
+    pub fn enwiden(mut self) -> Self {
+        let x_doubler = |coord: Coord| Coord::new(2*coord.x, coord.y);
+        self.robot = x_doubler(self.robot);
+        self.bounds = x_doubler(self.bounds);
+        self.data = self.data.into_iter()
+                .map(|(coord, char)| {
+                    let base = x_doubler(coord);
+                    match char {
+                        '#' => vec![(base, '#'), (base + Coord::new(1isize, 0isize), '#')].into_iter(),
                         'O' => vec![(base, '['), (base + Coord::new(1isize, 0isize), ']')].into_iter(),
                         _ => vec![].into_iter(),
                     }
@@ -111,38 +111,15 @@ impl StorageMap {
                 .flat_map(std::convert::identity)
                 .collect::<HashMap<Coord, char>>();
 
-        Self{
-            robot,
-            bounds,
-            data,
-        }
-    }
-
-    pub fn print(&self) {
-        for y in 0..self.bounds.y {
-            let line = (0..self.bounds.x)
-                .map(|x|
-                    match self.data.get(&Coord::new(x,y)) {
-                        Some(ch) => *ch,
-                        None => {
-                            if Coord::new(x,y) == self.robot {
-                                '@'
-                            } else {'.'}
-                        }
-                    }
-                ).collect::<String>();
-            println!("{line}");
-        }
+        self
     }
 }
 
 fn print_final_grade(mut input: StorageMap, directions: &Vec<Coord>) {
-    //input.print();
     for direction in directions {
         input.robot_move(*direction);
     }
     println!("{}", input.grade());
-    //input.print();
 }
 
 pub fn main() {
