@@ -122,8 +122,8 @@ fn part2(computer_base: Computer, instructions: &Vec<usize>) {
         founds = next_founds;
     }
 
-    let result = founds.iter().min();
-    println!("{result:?}");
+    let result = founds.iter().min().unwrap();
+    println!("{result}");
 }
 
 pub fn main() {
