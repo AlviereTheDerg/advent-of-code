@@ -101,6 +101,31 @@ fn part1(mut computer: Computer, instructions: &Vec<usize>) {
     println!("{result}");
 }
 
+fn part2(computer_base: Computer, instructions: &Vec<usize>) {
+    let mut founds: Vec<usize> = vec![0];
+
+    for depth in (0..instructions.len()).rev() {
+        let mut next_founds: Vec<usize> = vec![];
+
+        for found in founds {
+            for diff in 0..8 {
+                let found = found * 8 + diff;
+                let mut computer = Computer::initialize(found, computer_base.reg_b, computer_base.reg_c);
+                computer.run(instructions);
+                let out = computer.get_out();
+                if &instructions[depth..] == &out[..] {
+                    next_founds.push(found);
+                }
+            }
+        }
+
+        founds = next_founds;
+    }
+
+    let result = founds.iter().min();
+    println!("{result:?}");
+}
+
 pub fn main() {
     let input = crate::grab_input("day17");
     let capturer = Regex::new(r#"^Register A: (\d+)\nRegister B: (\d+)\nRegister C: (\d+)\n\nProgram: (.+)\n$"#).unwrap();
@@ -117,4 +142,5 @@ pub fn main() {
         .collect::<Vec<usize>>();
 
     part1(computer.clone(), &instructions);
+    part2(computer, &instructions);
 }
