@@ -26,9 +26,7 @@ fn search(
     bounds: Coord,
 ) -> HashSet<Coord>
 {
-    // score -> Vec<(position, direction, visitation_stack)>
     let mut exploration: VecDeque<Coord> = VecDeque::new();
-    // (position, direction) -> score
     let mut visited: HashMap<Coord, Coord> = HashMap::new();
 
     exploration.push_front(start);
@@ -41,26 +39,30 @@ fn search(
             exploration.push_front(neighbour);
 
             if neighbour == goal {
-                return backtrace(visited, goal).into_iter().collect();
+                exploration.clear();
+                break;
             }
         }
     }
-
-    HashSet::new()
+    backtrace(visited, goal).into_iter().collect()
 }
 
-fn part1(obstacles: &Vec<Coord>, start: Coord, goal: Coord, bounds: Coord) -> (HashSet<Coord>, HashSet<Coord>) {
+fn part1(obstacles: &Vec<Coord>, start: Coord, goal: Coord, bounds: Coord) -> HashSet<Coord> {
     let first_1024: HashSet<Coord> = (obstacles[..1024]).iter().map(Coord::clone).collect();
-    let result = search(&first_1024, start, goal, bounds);
-    println!("{}", result.len() - 1);
-    (result, first_1024)
+    let result = search(&first_1024, start, goal, bounds).len() - 1;
+    println!("{}", result);
+    first_1024
 }
 
-fn part2(mut path: HashSet<Coord>, obstacles: &Vec<Coord>, mut blockages: HashSet<Coord>, start: Coord, goal: Coord, bounds: Coord) {
+fn part2(obstacles: &Vec<Coord>, mut blockages: HashSet<Coord>, start: Coord, goal: Coord, bounds: Coord) {
+    let mut path = search(&blockages, start, goal, bounds);
     let mut last_blockage = start;
-    while let Some(blockage) = obstacles.iter().filter(|c| path.contains(c)).next() {
+    while let Some((index, blockage)) = obstacles.iter().enumerate()
+        .filter(|(_, coord)| path.contains(coord))
+        .next() 
+    {
         last_blockage = *blockage;
-        blockages.insert(*blockage);
+        blockages = (obstacles[..=index]).iter().map(Coord::clone).collect();
         path = search(&blockages, start, goal, bounds);
     }
     println!("{},{}", last_blockage.x, last_blockage.y);
@@ -82,6 +84,6 @@ pub fn main() {
     let width = 70isize;
     let goal = Coord::new(width, width);
     let bounds = Coord::new(width+1, width+1);
-    let (path, blockages) = part1(&blocks, start, goal, bounds);
-    part2(path, &blocks, blockages, start, goal, bounds);
+    let blockages = part1(&blocks, start, goal, bounds);
+    part2(&blocks, blockages, start, goal, bounds);
 }
