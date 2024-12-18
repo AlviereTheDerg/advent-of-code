@@ -49,10 +49,21 @@ fn search(
     HashSet::new()
 }
 
-fn part1(obstacles: &Vec<Coord>, start: Coord, goal: Coord, bounds: Coord) {
+fn part1(obstacles: &Vec<Coord>, start: Coord, goal: Coord, bounds: Coord) -> (HashSet<Coord>, HashSet<Coord>) {
     let first_1024: HashSet<Coord> = (obstacles[..1024]).iter().map(Coord::clone).collect();
-    let result = search(&first_1024, start, goal, bounds).len() - 1;
-    println!("{result}");
+    let result = search(&first_1024, start, goal, bounds);
+    println!("{}", result.len() - 1);
+    (result, first_1024)
+}
+
+fn part2(mut path: HashSet<Coord>, obstacles: &Vec<Coord>, mut blockages: HashSet<Coord>, start: Coord, goal: Coord, bounds: Coord) {
+    let mut last_blockage = start;
+    while let Some(blockage) = obstacles.iter().filter(|c| path.contains(c)).next() {
+        last_blockage = *blockage;
+        blockages.insert(*blockage);
+        path = search(&blockages, start, goal, bounds);
+    }
+    println!("{},{}", last_blockage.x, last_blockage.y);
 }
 
 pub fn main() {
@@ -71,5 +82,6 @@ pub fn main() {
     let width = 70isize;
     let goal = Coord::new(width, width);
     let bounds = Coord::new(width+1, width+1);
-    part1(&blocks, start, goal, bounds);
+    let (path, blockages) = part1(&blocks, start, goal, bounds);
+    part2(path, &blocks, blockages, start, goal, bounds);
 }
