@@ -19,6 +19,7 @@ mod day15;
 mod day16;
 mod day17;
 mod day18;
+mod day19;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -45,6 +46,7 @@ fn main() {
         16 => { day16::main(); },
         17 => { day17::main(); },
         18 => { day18::main(); },
+        19 => { day19::main(); },
         _ => { println!("Day not recognized!"); },
     }
 }
