@@ -1,5 +1,5 @@
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use crate::{Coord, New};
 
 fn get_path(walls: &HashSet<Coord>, start: Coord, end: Coord) -> HashMap<Coord, usize> {
@@ -42,6 +42,43 @@ fn part1(walls: &HashSet<Coord>, start: Coord, end: Coord) {
         let skips = cheats.values().filter(|cheat_skip| cheat_skip == skip_length).count();
         println!("There are {skips} cheats that save {skip_length} picoseconds.");
     }*/
+    let result = cheats.values().filter(|&&skip_length| skip_length >= 100).count();
+    println!("{result}");
+}
+
+fn all_reachable_within_20(coord: Coord) -> HashMap<Coord, usize> {
+    let neighbours = vec![Coord{x:1,y:0}, Coord{x:-1,y:0}, Coord{x:0,y:1}, Coord{x:0,y:-1}];
+
+    let mut exploration = VecDeque::new();
+    exploration.push_front((coord, 0usize));
+    let mut explored = HashMap::new();
+
+    while let Some((here, dist)) = exploration.pop_back() {
+        if explored.contains_key(&here) || dist > 20 {continue;}
+        explored.insert(here, dist);
+
+        for &neighbour in neighbours.iter() {
+            exploration.push_front((here+neighbour, dist+1));
+        }
+    }
+
+    explored
+}
+
+fn part2(walls: &HashSet<Coord>, start: Coord, end: Coord) {
+    let travel_path = get_path(walls, start, end);
+
+    let mut cheats: HashMap<(Coord, Coord), usize> = HashMap::new();
+    for (&start_point, &start_score) in travel_path.iter() {
+        for (destination_point, skip_dist) in all_reachable_within_20(start_point) {
+            if let Some(&destination_score) = travel_path.get(&destination_point) {
+                if destination_score > start_score + skip_dist {
+                    cheats.insert((start_point, destination_point), destination_score - start_score - skip_dist);
+                }
+            }
+        }
+    }
+
     let result = cheats.values().filter(|&&skip_length| skip_length >= 100).count();
     println!("{result}");
 }
@@ -89,4 +126,5 @@ pub fn main() {
     let walls = maze.into_keys().collect::<HashSet<Coord>>();
 
     part1(&walls, start, goal);
+    part2(&walls, start, goal);
 }
