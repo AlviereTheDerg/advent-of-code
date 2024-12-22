@@ -8,26 +8,15 @@ fn next_secret_number(mut secret: isize) -> isize {
     secret
 }
 
-fn part1(monkey_numbers: &Vec<isize>) {
-    let mut result = 0;
-    for monkey_number in monkey_numbers {
-        let mut monkey_number = *monkey_number;
-        for _ in 0..2000 {
-            monkey_number = next_secret_number(monkey_number);
-        }
-        result += monkey_number;
-    }
+fn part1(monkey_numbers: &Vec<Vec<isize>>) {
+    let result = monkey_numbers.iter().map(|num| num.last().unwrap()).sum::<isize>();
     println!("{result}");
 }
 
-fn part2(monkey_numbers: &Vec<isize>) {
+fn part2(monkey_numbers: &Vec<Vec<isize>>) {
     let mut monkey_number_maps: HashMap<(isize, isize, isize, isize), isize> = HashMap::new();
-    for monkey in monkey_numbers {
-        let mut monkey_numbers = vec![*monkey];
-        for _ in 0..2000 {
-            monkey_numbers.push(next_secret_number(*monkey_numbers.last().unwrap()));
-        }
-        monkey_numbers = monkey_numbers.into_iter().map(|v| v % 10).collect();
+    for secret_numbers in monkey_numbers {
+        let monkey_numbers: Vec<isize> = secret_numbers.into_iter().map(|v| v % 10).collect();
         let mut this_monkey_map: HashMap<(isize, isize, isize, isize), isize> = HashMap::new();
         for window_spot in 0..(monkey_numbers.len()-4) {
             let window = (
@@ -47,16 +36,24 @@ fn part2(monkey_numbers: &Vec<isize>) {
         }
     }
     
-    let result = monkey_number_maps.values().max();
-    println!("{result:?}");
+    let result = monkey_number_maps.values().max().unwrap();
+    println!("{result}");
 }
 
 pub fn main() {
     let input = crate::grab_input("day22");
-    let starting_numbers: Vec<isize> = input.split_whitespace()
+
+    let monkey_numbers = input.split_whitespace()
         .filter(|line| !line.is_empty())
-        .map(|line| line.parse().unwrap())
-        .collect();
-    part1(&starting_numbers);
-    part2(&starting_numbers);
+        .map(|line| {
+            let mut monkey_number = vec![line.parse::<isize>().unwrap()];
+            for _ in 0..2000 {
+                monkey_number.push(next_secret_number(*monkey_number.last().unwrap()));
+            }
+            monkey_number
+        })
+        .collect::<Vec<_>>();
+
+    part1(&monkey_numbers);
+    part2(&monkey_numbers);
 }
