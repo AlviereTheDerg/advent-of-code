@@ -1,5 +1,5 @@
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 fn part1(input: &HashMap<&str, HashSet<&str>>) {
     let mut found_trios: HashSet<(&str, &str, &str)> = HashSet::new();
@@ -30,22 +30,23 @@ fn part1(input: &HashMap<&str, HashSet<&str>>) {
 }
 
 fn part2(input: &HashMap<&str, HashSet<&str>>) {
-    let mut clusters: Vec<(HashSet<&str>, &str)> = input.keys()
+    let mut clusters: Vec<(Vec<&str>, &str)> = input.keys()
         .map(|&nucleation| {
-            (HashSet::new(), nucleation)
+            (Vec::new(), nucleation)
         })
         .collect();
     
-    let mut largest_cluster: HashSet<&str> = HashSet::new();
+    let mut largest_cluster: Vec<&str> = Vec::new();
     let mut visited: HashSet<Vec<&str>> = HashSet::new();
     while let Some((mut cluster, addition)) = clusters.pop() {
-        cluster.insert(addition);
-        
-        let mut vec_cluster: Vec<&str> = cluster.clone().into_iter().collect();
-        vec_cluster.sort();
-        if visited.contains(&vec_cluster) {continue;}
-        visited.insert(vec_cluster);
+        cluster.push(addition);
 
+        // don't re-search same cluster over and over
+        cluster.sort();
+        if visited.contains(&cluster) {continue;}
+        visited.insert(cluster.clone());
+
+        // update largest found cluster as need be
         if cluster.len() > largest_cluster.len() {
             largest_cluster = cluster.clone();
         }
@@ -61,9 +62,8 @@ fn part2(input: &HashMap<&str, HashSet<&str>>) {
         }
     }
 
-    let mut names: Vec<&str> = largest_cluster.into_iter().collect();
-    names.sort();
-    let result = names.join(",");
+    largest_cluster.sort();
+    let result = largest_cluster.join(",");
     println!("{result}");
 }
 
