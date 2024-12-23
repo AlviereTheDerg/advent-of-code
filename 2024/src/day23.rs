@@ -1,5 +1,5 @@
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 fn part1(input: &HashMap<&str, HashSet<&str>>) {
     let mut found_trios: HashSet<(&str, &str, &str)> = HashSet::new();
@@ -26,6 +26,44 @@ fn part1(input: &HashMap<&str, HashSet<&str>>) {
             result += 1;
         }
     }
+    println!("{result}");
+}
+
+fn part2(input: &HashMap<&str, HashSet<&str>>) {
+    let mut clusters: Vec<(HashSet<&str>, &str)> = input.keys()
+        .map(|&nucleation| {
+            (HashSet::new(), nucleation)
+        })
+        .collect();
+    
+    let mut largest_cluster: HashSet<&str> = HashSet::new();
+    let mut visited: HashSet<Vec<&str>> = HashSet::new();
+    while let Some((mut cluster, addition)) = clusters.pop() {
+        cluster.insert(addition);
+        
+        let mut vec_cluster: Vec<&str> = cluster.clone().into_iter().collect();
+        vec_cluster.sort();
+        if visited.contains(&vec_cluster) {continue;}
+        visited.insert(vec_cluster);
+
+        if cluster.len() > largest_cluster.len() {
+            largest_cluster = cluster.clone();
+        }
+
+        let potential_expansions = input.get(addition).unwrap().iter()
+            .filter(|&&node|
+                cluster.iter()
+                    .map(|key| input.get(key).unwrap())
+                    .all(|set| set.contains(node))
+            );
+        for &neighbour in potential_expansions {
+            clusters.push((cluster.clone(), neighbour));
+        }
+    }
+
+    let mut names: Vec<&str> = largest_cluster.into_iter().collect();
+    names.sort();
+    let result = names.join(",");
     println!("{result}");
 }
 
@@ -64,4 +102,5 @@ pub fn main() {
     }
 
     part1(&graph);
+    part2(&graph)
 }
