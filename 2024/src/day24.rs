@@ -2,7 +2,7 @@
 use std::collections::{HashMap, HashSet};
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Circuits {
     pub values: HashMap<String, bool>,
     pub gate_type: HashMap<String, String>,
@@ -90,6 +90,132 @@ fn part1(input: &Circuits) {
     println!("{result}");
 }
 
+fn part2(input: &Circuits) {
+    let mut flagged: Vec<&str> = vec![];
+    // 3 types of gate sets for ripple adder
+    
+    // start:
+    // x00 ^ y00 -> z00
+    // x00 & y00 -> c(arry out)
+
+    // middle:
+    // x ^ y -> A
+    // cin ^ A -> z
+    // cin & A -> B
+    // x & y -> C
+    // B | C -> cout
+
+    // end:
+    // x44 ^ y44 -> A
+    // cin ^ A -> z44
+    // cin & A -> B
+    // x44 & y44 -> C
+    // B | C -> z45
+    for (gate_name, gate_type) in input.gate_type.iter() {
+        let mut inputs = input.inputs.get(gate_name).unwrap().iter().collect::<Vec<_>>();
+        inputs.sort();
+
+        let from_xy = 
+            inputs.get(0).unwrap().chars().nth(0) == Some('x') ||
+            inputs.get(1).unwrap().chars().nth(0) == Some('y');
+
+        // x00 ^ y00 -> z00 gets a pass
+        if *inputs.get(0).unwrap() == "x00" && gate_type == "XOR" && gate_name == "z00" {
+            continue;
+        }
+        // x00 & y00 -> ??? gets a pass
+        if *inputs.get(0).unwrap() == "x00" && gate_type == "AND" {
+            continue;
+        }
+        // ??? | ??? -> z45 gets a pass
+        if gate_name == "z45" && gate_type == "OR" {
+            continue;
+        }
+
+        // middle:
+        // x ^ y -> A
+        // cin ^ A -> z
+        // cin & A -> B
+        // x & y -> C
+        // B | C -> cout
+
+        // end:
+        // x44 ^ y44 -> A
+        // cin ^ A -> z44
+        // cin & A -> B
+        // x44 & y44 -> C
+        
+
+        // cin ^ A -> z
+        // cin ^ A -> z44
+        // remaining z gates MUST:
+        if gate_name.chars().nth(0) == Some('z') {
+            // be XOR gates
+            if gate_type != "XOR" {
+                //println!("z but !^: {gate_name}");
+                flagged.push(gate_name);
+            }
+            // not have xy as input
+            else if from_xy {
+                //println!("from xy and to z: {gate_name}");
+                flagged.push(gate_name);
+            }
+            continue;
+        }
+
+        // middle:
+        // x ^ y -> A
+        // cin & A -> B
+        // x & y -> C
+        // B | C -> cout
+
+        // end:
+        // x44 ^ y44 -> A
+        // cin & A -> B
+        // x44 & y44 -> C
+
+        
+        // x ^ y -> A
+        // x44 ^ y44 -> A
+        // remaining XOR gates MUST:
+        if gate_type == "XOR" {
+            // have xy as input
+            if !from_xy {
+                //println!("XOR not from xy: {gate_name}");
+                flagged.push(gate_name);
+            }
+            // have another XOR gate as an output (that gate should be to a z bit but that gate might be mixed up)
+            else if !input.outputs.get(gate_name).unwrap().iter().any(|gate_name| input.gate_type.get(gate_name).unwrap() == "XOR") {
+                //println!("^->!^: {gate_name}");
+                flagged.push(gate_name);
+            }
+            continue;
+        }
+
+        // middle:
+        // cin & A -> B
+        // x & y -> C
+        // B | C -> cout
+
+        // end:
+        // cin & A -> B
+        // x44 & y44 -> C
+
+        // AND gates MUST:
+        if gate_type == "AND" {
+            // be used in an OR gate
+            if !input.outputs.get(gate_name).unwrap().iter().any(|gate_name| input.gate_type.get(gate_name).unwrap() == "OR") {
+                //println!("&->!|: {gate_name}");
+                flagged.push(gate_name);
+            }
+            continue;
+        }
+        // at this point, it worked for me
+    }
+    flagged.sort();
+    println!("{}", flagged.join(","));
+}
+
 pub fn main() {
     let input = crate::grab_input("day24");
 
@@ -103,7 +229,7 @@ pub fn main() {
     }
     //println!("{:?}", circuits.values);
 
-    let gate_grabber = Regex::new(r#"(.{3}) (XOR|OR|AND) (.{3}) -> (.{3})"#).unwrap();
+    let gate_grabber = Regex::new(r#"(.+) (XOR|OR|AND) (.+) -> (.+)"#).unwrap();
     for gate_capture in gate_grabber.captures_iter(input_split.next().unwrap()) {
         let (_, [input_one, gate_type, input_two, gate_name]) = gate_capture.extract();
         circuits.add_gate(gate_name, input_one, input_two, gate_type);
@@ -123,4 +249,5 @@ pub fn main() {
     //println!("{:?}", values);
     
     part1(&circuits);
+    part2(&circuits);
 }
