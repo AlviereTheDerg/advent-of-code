@@ -1,10 +1,11 @@
 
+const DIAL_MAX: i32 = 100;
+
 fn part1(spins: &Vec<i32>) {
     let mut result = 0;
     let mut dial = 50;
-    let dial_max = 100;
     for spin in spins {
-        dial = ((dial + spin) % dial_max + dial_max) % dial_max;
+        dial = ((dial + spin) % DIAL_MAX + DIAL_MAX) % DIAL_MAX;
         if dial == 0 {result += 1}
     }
 
@@ -14,13 +15,13 @@ fn part1(spins: &Vec<i32>) {
 fn part2(spins: &Vec<i32>) {
     let mut result = 0;
     let mut dial = 50;
-    let dial_max = 100;
     for spin in spins {
-        let diff = if spin > &0 {1} else {-1};
-        for _ in 0..spin.abs() {
-            dial = (dial + diff + dial_max) % dial_max;
-            if dial == 0 {result += 1};
-        }
+        if spin.abs() > DIAL_MAX {result += spin.abs() / DIAL_MAX} // |spin| > MAX => crosses 0 |spin|/MAX times
+        let spin = spin % DIAL_MAX; // remaining spin
+
+        // |spin|<MAX that *leave* 0 don't qualify as crossing 0
+        if (dial + spin <= 0 || dial + spin >= DIAL_MAX) && dial != 0 {result += 1} 
+        dial = ((dial + spin) % DIAL_MAX + DIAL_MAX) % DIAL_MAX;
     }
     
     println!("{result}");
