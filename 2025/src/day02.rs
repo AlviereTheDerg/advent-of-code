@@ -1,25 +1,8 @@
 use itertools::Itertools;
 
-fn check_validity(input: isize) -> bool {
+fn check_validity_gen(input: isize, splits: &Vec<u32>) -> bool {
     let length = input.checked_ilog10().unwrap_or(0) + 1;
-    if length % 2 == 1 {return true}
-
-    input % 10_isize.pow(length / 2) != input / 10_isize.pow(length / 2)
-}
-
-fn part1(input: &Vec<(isize, isize)>) {
-    let mut invalid_sum: isize = 0;
-    for (a,b) in input {
-        for c in *a..=*b {
-            if !check_validity(c) {invalid_sum += c};
-        }
-    }
-    println!("{invalid_sum}");
-}
-
-fn check_validity_2(input: isize) -> bool {
-    let length = input.checked_ilog10().unwrap_or(0) + 1;
-    for prime in vec![2, 3, 5, 7, 11] {
+    for &prime in splits {
         if length % prime != 0 {continue}
 
         let block_length = length / prime;
@@ -33,16 +16,15 @@ fn check_validity_2(input: isize) -> bool {
     true
 }
 
-fn part2(input: &Vec<(isize, isize)>) {
+fn sum_invalids(input: &Vec<(isize, isize)>, splits: Vec<u32>) {
     let mut invalid_sum: isize = 0;
     for (a,b) in input {
         for c in *a..=*b {
-            if !check_validity_2(c) {invalid_sum += c};
+            if !check_validity_gen(c, &splits) {invalid_sum += c};
         }
     }
     println!("{invalid_sum}");
 }
-
 
 pub fn main() {
     let input = crate::grab_input("day02");
@@ -55,7 +37,6 @@ pub fn main() {
         })
         .collect();
     
-
-    part1(&ranges);
-    part2(&ranges);
+    sum_invalids(&ranges, vec![2]); // part 1
+    sum_invalids(&ranges, vec![2,3,5,7,11]); // part 2
 }
