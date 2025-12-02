@@ -2,7 +2,7 @@
 use std::{env, fs, hash::Hash};
 
 mod day01;
-// mod day02;
+mod day02;
 // mod day03;
 // mod day04;
 // mod day05;
@@ -22,7 +22,7 @@ fn main() {
 
     match day {
         1 => { day01::main(); },
-        // 2 => { day02::main(); },
+        2 => { day02::main(); },
         // 3 => { day03::main(); },
         // 4 => { day04::main(); },
         // 5 => { day05::main(); },
@@ -38,6 +38,7 @@ fn main() {
 }
 
 
+#[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct Coord {
     pub x: isize,
@@ -72,6 +73,7 @@ impl std::ops::Mul<isize> for Coord {
         }
     }
 }
+#[allow(dead_code)]
 impl Coord {
     fn within_bounds(&self, outer_bounds: &Coord) -> bool {
         self.x >= 0 &&
@@ -80,6 +82,7 @@ impl Coord {
         self.y < outer_bounds.y
     }
 }
+#[allow(dead_code)]
 trait New<X,Y> {
     fn new(x:X, y:Y) -> Self;
 }
