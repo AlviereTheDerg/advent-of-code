@@ -1,28 +1,25 @@
 
 
 fn part1(fresh_ranges: &Vec<(u64, u64)>, ingredient_ids: &Vec<u64>) {
-    let mut valid_ids = 0;
-
-    for ingredient_id in ingredient_ids {
-        for (range_start, range_end) in fresh_ranges {
-            if range_start <= ingredient_id && ingredient_id <= range_end {
-                valid_ids += 1;
-                break;
-            }
-        }
-    }
+    let valid_ids = ingredient_ids.iter()
+        .filter(|&ingredient_id| 
+            fresh_ranges.iter().any(|(range_start, range_end)| 
+                range_start <= ingredient_id && ingredient_id <= range_end
+            )
+        )
+        .count();
 
     println!("{}", valid_ids);
 }
 
 fn part2(fresh_ranges: &Vec<(u64, u64)>) {
-    let mut headaches: Vec<(u64,u64,bool)> = Vec::new();
+    let mut headaches: Vec<(u64,u64,bool)> = Vec::new(); // start, end, ordinality (add/subtract)
     for (new_start,new_end) in fresh_ranges {
         let mut new_headaches = Vec::new();
         for (old_start, old_end, old_add) in &headaches {
             // mask some variables so we have left range and right range rather than new/old
             // go by start distance for left vs right, if same start then whichever ENDS SOONER is left
-            let (left_start, left_end, right_start, right_end) = 
+            let (_left_start, left_end, right_start, right_end) = 
                 if (new_start < old_start) || (new_start == old_start && new_end < old_end) {
                     (new_start, new_end, old_start, old_end)
                 } else {
@@ -33,7 +30,6 @@ fn part2(fresh_ranges: &Vec<(u64, u64)>) {
             if left_end < right_start {continue;}
             
             // begrudgingly, we must handle, overlap
-            
             if right_end < left_end { // total overlap
                 new_headaches.push((*right_start, *right_end, !old_add));
             } else { // partial overlap
