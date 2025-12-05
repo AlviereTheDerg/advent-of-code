@@ -1,6 +1,6 @@
 
 
-fn part1(fresh_ranges: &Vec<(usize, usize)>, ingredient_ids: &Vec<usize>) {
+fn part1(fresh_ranges: &Vec<(u64, u64)>, ingredient_ids: &Vec<u64>) {
     let mut valid_ids = 0;
 
     for ingredient_id in ingredient_ids {
@@ -15,19 +15,53 @@ fn part1(fresh_ranges: &Vec<(usize, usize)>, ingredient_ids: &Vec<usize>) {
     println!("{}", valid_ids);
 }
 
+fn part2(fresh_ranges: &Vec<(u64, u64)>) {
+    let mut headaches: Vec<(u64,u64,bool)> = Vec::new();
+    for (new_start,new_end) in fresh_ranges {
+        let mut new_headaches = Vec::new();
+        for (old_start, old_end, old_add) in &headaches {
+            // mask some variables so we have left range and right range rather than new/old
+            // go by start distance for left vs right, if same start then whichever ENDS SOONER is left
+            let (left_start, left_end, right_start, right_end) = 
+                if (new_start < old_start) || (new_start == old_start && new_end < old_end) {
+                    (new_start, new_end, old_start, old_end)
+                } else {
+                    (old_start, old_end, new_start, new_end)
+                };
+            
+            // check for NO OVERLAP AT ALL (best case please be this case please)
+            if left_end < right_start {continue;}
+            
+            // begrudgingly, we must handle, overlap
+            
+            if right_end < left_end { // total overlap
+                new_headaches.push((*right_start, *right_end, !old_add));
+            } else { // partial overlap
+                new_headaches.push((*right_start, *left_end, !old_add));
+            }
+        }
+        headaches.extend(new_headaches);
+        headaches.push((*new_start, *new_end, true));
+    }
+
+    let result: i64 = headaches.iter().map(|(start,end,add)| (end - start + 1) as i64 * if *add {1} else {-1}).sum();
+    println!("{}", result);
+}
+
 pub fn main() {
     let input = crate::grab_input("day05");
     let (fresh_ranges, ingredient_ids) = input.split_once("\n\n").unwrap();
 
-    let fresh_ranges: Vec<(usize, usize)> = fresh_ranges.split_whitespace()
+    let fresh_ranges: Vec<(u64, u64)> = fresh_ranges.split_whitespace()
         .map(|row| {
             let (a,b) = row.split_once("-").unwrap();
             (a.parse().unwrap(), b.parse().unwrap())
         }).collect();
 
-    let ingredient_ids: Vec<usize> = ingredient_ids.split_whitespace()
+    let ingredient_ids: Vec<u64> = ingredient_ids.split_whitespace()
         .map(|num| num.parse().unwrap())
         .collect();
 
     part1(&fresh_ranges, &ingredient_ids);
+    part2(&fresh_ranges);
 }
