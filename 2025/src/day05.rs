@@ -44,6 +44,33 @@ fn part2(fresh_ranges: &Vec<(u64, u64)>) {
     println!("{}", result);
 }
 
+fn refactored_main(mut fresh_ranges: Vec<(u64, u64)>, ingredient_ids: Vec<u64>) {
+    fresh_ranges.sort();
+    let mut compacted_ranges: Vec<(u64, u64)> = Vec::new();
+    let (mut compacted_start, mut compacted_end) = fresh_ranges.get(0).unwrap().clone();
+    for (fresh_start, fresh_end) in fresh_ranges {
+        if fresh_start < compacted_end { // extends current window
+            compacted_end = if compacted_end > fresh_end {compacted_end} else {fresh_end};
+        } else { // start of a new window
+            compacted_ranges.push((compacted_start, compacted_end));
+            compacted_start = fresh_start;
+            compacted_end = fresh_end;
+        }
+    }
+    compacted_ranges.push((compacted_start, compacted_end));
+
+    use std::time::Instant;
+    let mut now = Instant::now();
+    {part1(&compacted_ranges, &ingredient_ids);}
+    let mut elapsed = now.elapsed();
+    println!("Part 1 refactored: {:.2?}", elapsed);
+    
+    now = Instant::now();
+    {part2(&compacted_ranges);}
+    elapsed = now.elapsed();
+    println!("Part 2 refactored: {:.2?}", elapsed);
+}
+
 pub fn main() {
     let input = crate::grab_input("day05");
     let (fresh_ranges, ingredient_ids) = input.split_once("\n\n").unwrap();
@@ -57,7 +84,23 @@ pub fn main() {
     let ingredient_ids: Vec<u64> = ingredient_ids.split_whitespace()
         .map(|num| num.parse().unwrap())
         .collect();
-
-    part1(&fresh_ranges, &ingredient_ids);
-    part2(&fresh_ranges);
+    
+    use std::time::Instant;
+    let full_now = Instant::now();
+    let mut now = Instant::now();
+    {part1(&fresh_ranges, &ingredient_ids);}
+    let mut elapsed = now.elapsed();
+    println!("Part 1 normal: {:.2?}", elapsed);
+    
+    now = Instant::now();
+    {part2(&fresh_ranges);}
+    elapsed = now.elapsed();
+    println!("Part 2 normal: {:.2?}", elapsed);
+    elapsed = full_now.elapsed();
+    println!("Full normal: {:.2?}", elapsed);
+    
+    now = Instant::now();
+    {refactored_main(fresh_ranges, ingredient_ids);}
+    elapsed = now.elapsed();
+    println!("Full refactored: {:.2?}", elapsed);
 }
