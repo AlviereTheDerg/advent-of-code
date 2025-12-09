@@ -1,6 +1,5 @@
 
 use crate::{Coord, New};
-use std::collections::HashSet;
 
 fn part1(red_tiles: &Vec<Coord>) {
     let mut result = 0;
