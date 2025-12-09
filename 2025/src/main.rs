@@ -9,7 +9,7 @@ mod day05;
 mod day06;
 mod day07;
 mod day08;
-// mod day09;
+mod day09;
 // mod day10;
 // mod day11;
 // mod day12;
@@ -29,7 +29,7 @@ fn main() {
         6 => { day06::main(); },
         7 => { day07::main(); },
         8 => { day08::main(); },
-        // 9 => { day09::main(); },
+        9 => { day09::main(); },
         // 10 => { day10::main(); },
         // 11 => { day11::main(); },
         // 12 => { day12::main(); },
