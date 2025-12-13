@@ -1,4 +1,3 @@
-use itertools::Itertools;
 
 fn check_validity_gen(input: isize, splits: &Vec<u32>) -> bool {
     let length = input.checked_ilog10().unwrap_or(0) + 1;
@@ -32,7 +31,7 @@ pub fn main() {
     let ranges: Vec<(isize, isize)> = input.split_whitespace().collect::<String>()
         .split(",")
         .map(|range_full| {
-            let (a,b) = range_full.split("-").collect_tuple().unwrap();
+            let (a,b) = range_full.split_once("-").unwrap();
             (a.parse().unwrap(), b.parse().unwrap())
         })
         .collect();
