@@ -30,134 +30,6 @@ fn part1(lights_data: &Vec<(u16, Vec<u16>)>) {
     println!("{}", result);
 }
 
-fn bfs_joltages(start: &Vec<i16>, buttons: &Vec<Vec<u16>>) -> u16 {
-    let mut search_queue = VecDeque::new();
-    search_queue.push_back((start.clone(), 0u16)); // current 'place' (joltage ticks remaining), number of steps
-    let mut searched = HashMap::new();
-    while let Some((here, steps)) = search_queue.pop_front() {
-        if let Some(&already) = searched.get(&here) && already <= steps {continue;}
-        searched.insert(here.clone(), steps);
-        for button in buttons {
-            let mut modified_here = here.clone();
-            for &button_sub in button {
-                modified_here[button_sub as usize] -= 1;
-            }
-            if modified_here.iter().any(|&v| v < 0) {continue;} // if a joltage-ticks-remaining goes negative
-            if modified_here.iter().all(|&v| v == 0) {return steps + 1;} // if we met the goal
-
-            search_queue.push_back((modified_here, steps + 1));
-        }
-    }
-    0
-}
-
-fn gcd(a: isize, b: isize) -> isize {
-    let (high, low) = (a.max(b), a.min(b));
-    if low == 0 {
-        high
-    } else {
-        gcd(low, high % low)
-    }
-}
-
-fn part2_linalg(joltage_data: &Vec<(Vec<i16>, Vec<Vec<u16>>)>) {
-    let mut result = 0;
-    for (start, buttons) in joltage_data {
-        // construct matrix to be reduced
-        let rows = start.len();
-        let columns = buttons.len();
-        let mut matrix_data = vec![vec![0i16; columns + 1]; rows];
-        for (column, button) in buttons.iter().enumerate() {
-            for &row in button {
-                matrix_data[row as usize][column] = 1;
-            }
-        }
-        for (row, &val) in start.iter().enumerate() {
-            matrix_data[row][columns] = val;
-        }
-
-        // reduce the matrix, track dependents and independents
-        let mut pivot_count = 0;
-        let mut column = 0;
-        let mut dependents: Vec<usize> = Vec::new();
-        let mut independents: Vec<usize> = Vec::new();
-        while pivot_count < rows && column < columns {
-            // if this column is all 0s, independent, and try to pivot on the next column
-            if matrix_data.iter()
-                .skip(pivot_count)
-                .map(|row| row.get(column).unwrap())
-                .all(|val| *val == 0) {
-                independents.push(column);
-                column += 1;
-                continue;
-            }
-
-            // pivot around the smallest (absolute value) non-zero value to pivot on
-            let (pivot_row, mut pivot_value) = matrix_data.iter().enumerate()
-                .skip(pivot_count)
-                .map(|(row_index, row_content)| 
-                    (row_index, row_content.get(column).unwrap().abs())
-                )
-                .filter(|(_, val)| *val != 0)
-                .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                .unwrap();
-            
-            // attempt to normalize row
-            let mut divisor = matrix_data.get(pivot_row).unwrap()
-                .iter()
-                .map(|v| v.abs())
-                .fold(pivot_value, |a, b| gcd(a as isize, b as isize) as i16);
-            pivot_value /= divisor;
-            divisor *= if *matrix_data.get(pivot_row).unwrap().get(column).unwrap() > 0 {1} else {-1};
-            for col in 0..(columns+1) {
-                *matrix_data.get_mut(pivot_row).unwrap().get_mut(col).unwrap() /= divisor;
-            }
-
-            // attempt to remove this value from all other rows
-            for row in 0..rows {
-                if row == pivot_row {continue;} // don't mul(0) a row
-
-                // avoid floating point bs => factor = current value in pivot row's column / pivot value (integer division -> rounds down)
-                let factor = *matrix_data.get(row).unwrap().get(column).unwrap() / pivot_value;
-
-                if factor == 0 {continue;} // no need to do anything to a row with 0 in this entry
-                for col in 0..(columns+1) {
-                    // this row's val -= factor * pivot row's val
-                    *matrix_data.get_mut(row).unwrap().get_mut(col).unwrap() -= factor * matrix_data.get(pivot_row).unwrap().get(col).unwrap()
-                }
-            }
-
-            // if this row isn't fully reduced BUT a different possible pivot row does exist at a lower value
-            if pivot_value != 1 && pivot_value > matrix_data.iter().enumerate()
-                .skip(pivot_count)
-                .map(|(row_index, row_content)| 
-                    (row_index, row_content.get(column).unwrap().abs())
-                )
-                .filter(|(row, val)| pivot_count < *row && *val != 0)
-                .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                .map(|(_, b)| b)
-                .unwrap()
-            {
-                continue;
-            }
-
-            // swap the pivot row up and mark this column as a dependent
-            matrix_data.swap(pivot_count, pivot_row);
-            dependents.push(column);
-
-            pivot_count += 1;
-            column += 1;
-        }
-
-        // all remaining columns are independents
-        independents.extend(column..columns);
-
-        println!("{:?}\n{:?}\n{:?}", matrix_data, dependents, independents);
-        result += bfs_joltages(start, buttons);
-    }
-    println!("{}", result);
-}
-
 fn all_possible_presses(start: u16, goal: u16, buttons: &Vec<u16>) -> Vec<BTreeSet<usize>> {
     let mut search_queue = VecDeque::new();
     let mut searched_space = HashSet::new();
@@ -184,7 +56,6 @@ fn all_possible_presses(start: u16, goal: u16, buttons: &Vec<u16>) -> Vec<BTreeS
             ))
         }
     }
-    finds.sort_by(|a, b| a.len().partial_cmp(&b.len()).unwrap());
     finds
 }
 
@@ -203,6 +74,7 @@ fn minimum_joltage_presses(
             value.to_owned()
         } else {
             let buff = all_possible_presses(0, target, buttons_bits);
+            println!("Miss. {}. {:?}", target, buff);
             precalculated_presses.insert(target, buff.clone());
             buff
         };
@@ -231,14 +103,24 @@ fn minimum_joltage_presses(
     lowest
 }
 
-fn part2_bifurcate(data: &Vec<(Vec<i16>, Vec<u16>, Vec<Vec<u16>>)>) {
+fn part2(data: &Vec<(Vec<i16>, Vec<u16>, Vec<Vec<u16>>)>) {
     let mut result = 0;
     for (index, (joltages, button_bits, button_ints)) in data.iter().enumerate() {
-        //let goal = joltages.iter().enumerate().map(|(index, val)| ((val % 2) as u16) << index).sum();
-        //println!("{:?} -> {:?}", joltages, all_possible_presses(0, goal, button_bits));
-        let buff = minimum_joltage_presses(button_bits, button_ints, joltages.clone(), &mut HashMap::new()).unwrap();
+        let mut precalculated_presses: HashMap<u16, Vec<BTreeSet<usize>>> = HashMap::new();
+        println!("Prepopulating up to {}", 2u16.pow(button_bits.len() as u32));
+        for sequence in 0..(2u16.pow(button_bits.len() as u32)) {
+            let mut sequence_indexes = BTreeSet::new();
+            let mut sequence_result = 0;
+            for (index, bits) in button_bits.iter().enumerate() {
+                if sequence & (1 << index) == 0 {continue;}
+                sequence_indexes.insert(index);
+                sequence_result ^= bits;
+            }
+            precalculated_presses.entry(sequence_result).or_insert(Vec::new()).push(sequence_indexes);
+        }
+
+        let buff = minimum_joltage_presses(button_bits, button_ints, joltages.clone(), &mut precalculated_presses).unwrap();
         result += buff;
-        //println!("{buff}");
         println!("Machine {index} solved!");
     }
     println!("{}", result);
@@ -294,8 +176,7 @@ pub fn main() {
     println!("{:2?}", elapsed);
 
     now = Instant::now();
-    part2_bifurcate(&combined_data);
-    //part2_linalg(&joltage_data);
+    part2(&combined_data);
     elapsed = now.elapsed();
     println!("{:2?}", elapsed);
 }
